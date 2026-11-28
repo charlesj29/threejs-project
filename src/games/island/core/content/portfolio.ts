@@ -7,8 +7,8 @@ export type PortfolioLink =
   | {
       readonly label: string;
       readonly href: string;
-      /** Offer the file as a download instead of opening it. */
-      readonly download?: boolean;
+      /** Offer the file as a download (saved under this name) instead of opening it. */
+      readonly download?: string;
     }
   | {
       readonly label: string;
@@ -237,7 +237,11 @@ export const PORTFOLIO: Readonly<Record<PanelId, PortfolioPanel>> = {
         links: [
           { label: 'Email', copy: EMAIL, copiedNotice: 'Email copied' },
           { label: 'WhatsApp', href: WHATSAPP },
-          { label: 'Download CV (PDF)', href: 'portfolio/charles-jonathan-cv.pdf', download: true },
+          {
+            label: 'Download CV (PDF)',
+            href: 'portfolio/charles-jonathan-cv.pdf',
+            download: 'Charles Jonathan - Software Engineer.pdf',
+          },
         ],
       },
     ],

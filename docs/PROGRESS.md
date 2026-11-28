@@ -92,6 +92,12 @@
 
 ## Session log
 
+### 2026-11-28 — CV download name (user request)
+
+- The CV now downloads as "Charles Jonathan - Software Engineer.pdf" (the link's `download`
+  attribute names it; the file on the site keeps its URL-safe name). `PortfolioLink.download` is
+  now the file name to save as.
+
 ### 2026-11-28 — The hot spring (user request; first of three chill places)
 
 - A new place to relax: a warm, milky-turquoise pool ringed with rocks, with a little stone

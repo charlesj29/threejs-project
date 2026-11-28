@@ -54,7 +54,7 @@ function LinkButton({
     <a
       className="portfolio-link"
       href={href}
-      {...(link.download ? { download: '' } : {})}
+      {...(link.download ? { download: link.download } : {})}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
       {link.label}
