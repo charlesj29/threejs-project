@@ -319,6 +319,23 @@ export interface IslandConfig {
     /** After a stall, run at most this many steps in one frame (no catch-up burst). */
     readonly maxStepsPerFrame: number;
   };
+  /** The hot spring: where it goes (generation) and its steam. */
+  readonly hotSpring: {
+    /** Generation: at least this many tiles from the village, the cottage and the workspace. */
+    readonly minGapTiles: number;
+    /** Generation: picks at random among this many of the cosiest spots (trees round, near a trail). */
+    readonly choices: number;
+    /** Steam puffs over the water at once, how long each one rises, and how high it gets. */
+    readonly steamPuffs: number;
+    readonly steamSeconds: number;
+    readonly steamRisePx: number;
+    /** How thick the steam is (0..1) by day, on a cool morning, and in the rain (the most wins). */
+    readonly steamDay: number;
+    readonly steamMorning: number;
+    readonly steamRain: number;
+    /** The cool morning (island time, 0..1): the steam is thickest. */
+    readonly morning: readonly [number, number];
+  };
   readonly player: {
     readonly walkSpeedTilesPerSecond: number;
     readonly runSpeedTilesPerSecond: number;
@@ -531,9 +548,12 @@ export interface IslandConfig {
       readonly steps: number;
       readonly bell: number;
       readonly guitar: number;
+      readonly spring: number;
     };
     /** The evening guitar is loudest within `nearTiles` of the player, gone by `farTiles`. */
     readonly guitar: { readonly nearTiles: number; readonly farTiles: number };
+    /** The hot spring is loudest within `nearTiles` of it, gone by `farTiles`. */
+    readonly spring: { readonly nearTiles: number; readonly farTiles: number };
     /** Wind chimes and voices are loudest within `nearTiles` of the village, gone by `farTiles`. */
     readonly village: { readonly nearTiles: number; readonly farTiles: number };
     /** When the distant village bell rings (fractions of a day: 0.5 = noon, 0.75 = 6 PM). */
@@ -820,6 +840,17 @@ export const ISLAND_CONFIG: IslandConfig = {
     grassTuftChance: 0.05,
   },
   loop: { stepsPerSecond: 60, maxStepsPerFrame: 5 },
+  hotSpring: {
+    minGapTiles: 6,
+    choices: 3,
+    steamPuffs: 6,
+    steamSeconds: 5,
+    steamRisePx: 14,
+    steamDay: 0.35,
+    steamMorning: 0.75,
+    steamRain: 0.6,
+    morning: [0.2, 0.36],
+  },
   player: {
     walkSpeedTilesPerSecond: 4,
     runSpeedTilesPerSecond: 7.5,
@@ -881,6 +912,7 @@ export const ISLAND_CONFIG: IslandConfig = {
     owl: [
       [0.22, 'fish'],
       [0.48, 'read'],
+      [0.62, 'soak'],
       [0.72, 'owl'],
     ],
   },
@@ -948,8 +980,10 @@ export const ISLAND_CONFIG: IslandConfig = {
       steps: 0.3,
       bell: 0.28,
       guitar: 0.3,
+      spring: 0.3,
     },
     guitar: { nearTiles: 3, farTiles: 14 },
+    spring: { nearTiles: 2, farTiles: 9 },
     village: { nearTiles: 1, farTiles: 14 },
     bellTimes: [0.5, 0.75],
     waves: { nearTiles: 2, farTiles: 16, floor: 0.06 },

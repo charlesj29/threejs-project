@@ -6,11 +6,13 @@
 import { createRng } from '@/shared/engine/random';
 import {
   birdPhrase,
+  bubble,
   crackle,
   cricketTrill,
   fireBed,
   noiseBuffer,
   rainfall,
+  springBed,
   surf,
 } from './ambienceSounds';
 import { startTicker, type Ticker } from './ticker';
@@ -35,7 +37,9 @@ export type AmbienceLayer =
   | 'steps'
   | 'bell'
   /** A little guitar played at the evening gathering. */
-  | 'guitar';
+  | 'guitar'
+  /** The hot spring: soft lapping and bubbles. */
+  | 'spring';
 /** 0..1 per layer. */
 export type AmbienceLevels = Readonly<Record<AmbienceLayer, number>>;
 
@@ -50,6 +54,7 @@ export const AMBIENCE_LAYERS: readonly AmbienceLayer[] = [
   'steps',
   'bell',
   'guitar',
+  'spring',
 ];
 
 export interface AmbiencePlayerOptions {
@@ -82,6 +87,7 @@ const TICK_MS = 50;
 const BIRD_GAP = { min: 1.8, max: 6.5 } as const;
 const CRACKLE_GAP = { min: 0.05, max: 0.45 } as const;
 const CHIME_GAP = { min: 2.5, max: 7 } as const;
+const BUBBLE_GAP = { min: 0.12, max: 0.9 } as const;
 const CRICKETS = [
   { pitch: 4600, every: 0.72 },
   { pitch: 5150, every: 0.93 },
@@ -125,11 +131,13 @@ function buildGraph(context: AudioContext): Graph {
     steps: layer(),
     bell: layer(),
     guitar: layer(),
+    spring: layer(),
   };
   const noise = noiseBuffer(context, 11);
   surf(context, noise, layers.waves);
   rainfall(context, noise, layers.rain);
   fireBed(context, noise, layers.fire);
+  springBed(context, noise, layers.spring);
   const syllables = voiceBed(context, noise, layers.chatter);
   return { context, master, layers, noise, syllables };
 }
@@ -149,6 +157,7 @@ export function createAmbiencePlayer(options: AmbiencePlayerOptions): AmbiencePl
     steps: 0,
     bell: 0,
     guitar: 0,
+    spring: 0,
   };
   const rng = createRng(RNG_SEED);
   const next = {
@@ -158,6 +167,7 @@ export function createAmbiencePlayer(options: AmbiencePlayerOptions): AmbiencePl
     syllable: 0,
     strum: 0,
     chord: 0,
+    bubble: 0,
     crickets: CRICKETS.map(() => 0),
   };
 
@@ -192,6 +202,11 @@ export function createAmbiencePlayer(options: AmbiencePlayerOptions): AmbiencePl
       const chord = GUITAR_CHORDS[next.chord % GUITAR_CHORDS.length] ?? [];
       next.strum = strum(context, layers.guitar, Math.max(next.strum, now), chord, rng);
       next.chord += 1;
+    }
+    if (levels.spring < AUDIBLE) next.bubble = Math.max(next.bubble, now);
+    while (levels.spring >= AUDIBLE && next.bubble < horizon) {
+      bubble(context, layers.spring, Math.max(next.bubble, now), rng);
+      next.bubble = Math.max(next.bubble, now) + rng.range(BUBBLE_GAP.min, BUBBLE_GAP.max);
     }
     CRICKETS.forEach((cricket, i) => {
       let at = Math.max(next.crickets[i] ?? 0, now);

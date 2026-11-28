@@ -249,12 +249,13 @@
         ["flower_yellow",12,29],
         ["flower_yellow",19,29],
         ["flower_yellow",20,29],
-        ["flower_red",3,30],
         ["grass_tuft",17,30],
         ["flower_red",18,30],
         ["grass_tuft",24,30],
         ["flower_red",15,31],
-        ["flower_red",19,31]
+        ["flower_red",19,31],
+        ["hot_spring",1,29],
+        ["stone_lantern",5,29]
       ]
     },
     {

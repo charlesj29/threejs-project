@@ -27,8 +27,10 @@ describe('actionLabel', () => {
     expect(actionLabel(state)).toBe('Read');
     state.interactTarget = { kind: 'object', object: bench, pages: [], sit: true };
     expect(actionLabel(state)).toBe('Sit');
-    state.player.sitting = { standX: 0, standY: 0 };
+    state.player.sitting = { standX: 0, standY: 0, soaking: false };
     expect(actionLabel(state)).toBe('Stand');
+    state.player.sitting = { standX: 0, standY: 0, soaking: true };
+    expect(actionLabel(state)).toBe('Get out');
     state.player.sitting = null;
     state.dialog = { pages: ['one', 'two'], page: 0 };
     expect(actionLabel(state)).toBe('Next');

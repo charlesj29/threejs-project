@@ -24,8 +24,8 @@ export interface Player {
   idleTime: number;
   /** Steps taken so far (a foot touches down twice per walk cycle): footstep sounds count these. */
   footfalls: number;
-  /** Sitting on a bench: where to stand up again, or null. */
-  sitting: { readonly standX: number; readonly standY: number } | null;
+  /** Sitting on a bench (or soaking in the hot spring): where to stand up again, or null. */
+  sitting: { readonly standX: number; readonly standY: number; readonly soaking: boolean } | null;
 }
 
 export interface Box {

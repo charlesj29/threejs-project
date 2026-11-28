@@ -27,6 +27,9 @@
 - **M4 follow-ups resolved (2026-11-21):** the user measured ~240 FPS with F3 on their laptop;
   the project is pushed to GitHub `origin/master` (the only branch; `main` no longer exists). Push only
   when the user asks. **Next:** pick new work from `docs/ROADMAP.md` with the user.
+- **Chill places (agreed 2026-11-28):** 1. hot spring ✅, 2. beach campfire, 3. stargazing hill
+  (one commit each). **Next:** the beach campfire (plan agreed: fire ring + log seats on the sand,
+  lit at dusk, crackle nearby; some evenings the village gathers there with the guitar).
 
 ## Milestones
 
@@ -88,6 +91,25 @@
   M2. A stream was rejected because the brief requires the lake not to touch the sea.
 
 ## Session log
+
+### 2026-11-28 — The hot spring (user request; first of three chill places)
+
+- A new place to relax: a warm, milky-turquoise pool ringed with rocks, with a little stone
+  lantern beside it, on quiet open grass away from the village and the houses, among trees and
+  near a trail. Every island gets one (a new last-but-one generation step, `placeHotSpring`, so
+  nothing else moves; validation requires it and a way up to it). The default island is re-baked:
+  only the spring, its lantern and a few cleared tufts changed.
+- Space (or a tap) steps into the water and sits down, in up to the chest with a ring of ripples;
+  Space again climbs out. The button reads "Soak" / "Get out". Two seats; never two on one.
+- Steam rises from the water all day, thickest on a cool morning and in the rain. The lantern
+  glows after dark. A soft lapping and bubbling you hear as you come near (`spring` sound layer).
+- The night owl goes for a soak late in the afternoon (new `soak` activity, no raincoat in the
+  pool) and tells you about the spring.
+- Settings: `hotSpring` (placement, steam), `ambience.spring`, `layerVolumes.spring`.
+- **Verified:** typecheck, lint, tests (placement on six seeds, nothing else moves, required by
+  validation; soaking and seats; steam; the owl's soak; the spring's sound), build; every seed
+  1–80 and the default get a spring; browser: standing by, soaking (morning steam), night (lantern
+  glow), the owl soaking, a phone tap walking over and stepping in; console clean.
 
 ### 2026-11-28 — Studio phones smaller again (user request)
 

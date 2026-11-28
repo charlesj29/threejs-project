@@ -1,7 +1,7 @@
 // The village's day. Each villager has a role and follows its schedule by the
 // clock: the baker minds the market stall in the morning, the keeper fetches
 // water and sweeps the doorstep, the night owl fishes off the dock, reads on a
-// bench and stays out on the plaza at night; in the evening everyone gathers
+// bench, has a soak in the hot spring and stays out on the plaza at night; in the evening everyone gathers
 // round the well, and at night the others go home (indoors, out of sight).
 // Pure: the fixed step moves them (through `wander.ts`); this decides where to.
 import { toIndex, type TilePoint } from '@/shared/engine/grid';
@@ -33,6 +33,8 @@ export interface RoutinePlaces {
   readonly bench: WorldObject | null;
   /** Spots round the well to gather on in the evening, nearest first. */
   readonly gather: readonly Spot[];
+  /** The hot spring, and where to stand before stepping in. */
+  readonly spring: { readonly object: WorldObject; readonly spot: Spot } | null;
 }
 
 export interface Spot {
@@ -48,6 +50,7 @@ const ACTIVITIES: readonly Activity[] = [
   'fish',
   'read',
   'gather',
+  'soak',
   'owl',
   'home',
   'shelter',
@@ -253,6 +256,10 @@ export function routinePlaces(world: World, roam: ReadonlySet<number>): RoutineP
         Math.abs(Math.hypot(b.tile.x - wellMiddle.x, b.tile.y - wellMiddle.y) - 2),
     );
   }
+  const springObject = find('hot_spring');
+  // Step in from the front if there's room (walking up from below), else from any side.
+  const springSpots = springObject ? spotsAround(springObject, world, roam) : [];
+  const springSpot = springSpots.find((s) => s.facing === 'up') ?? springSpots[0];
   return {
     stall: stall ? (spotsAround(stall, world, roam)[0] ?? null) : null,
     well: well ? (spotsAround(well, world, roam).find((s) => s.facing !== 'down') ?? null) : null,
@@ -261,6 +268,7 @@ export function routinePlaces(world: World, roam: ReadonlySet<number>): RoutineP
     dockTiles,
     bench,
     gather,
+    spring: springObject && springSpot ? { object: springObject, spot: springSpot } : null,
   };
 }
 
@@ -299,6 +307,11 @@ export function errandFor(
       return gatherSpot ? errandAt(gatherSpot) : null;
     case 'gather':
       return gatherSpot ? errandAt(gatherSpot) : null;
+    case 'soak':
+      // Walk up to the pool, then step in (it seats them like a bench).
+      return places.spring
+        ? { ...errandAt(places.spring.spot), bench: places.spring.object }
+        : null;
     case 'shelter':
       return places.stall
         ? errandAt(places.stall)
@@ -342,10 +355,11 @@ function switchActivity(
 }
 
 /** Arrived: settles in (faces the work, sits on the bench, or goes indoors). */
-function arrive(villager: Villager, errand: Errand, tileSizePx: number): void {
+function arrive(villager: Villager, errand: Errand, tileSizePx: number, crowd: Crowd): void {
   villager.atErrand = true;
   villager.facing = errand.facing;
-  if (errand.bench) sitOn(villager, errand.bench, tileSizePx);
+  const others = crowd.player ? [crowd.player, ...crowd.villagers] : crowd.villagers;
+  if (errand.bench) sitOn(villager, errand.bench, tileSizePx, others);
   if (errand.goInside) villager.hidden = true;
 }
 
@@ -401,7 +415,7 @@ export function updateRoutine(
   }
   if (villager.route.length > 0 || villager.pauseTime > 0) return;
   if (tileX === errand.goal.x && tileY === errand.goal.y) {
-    arrive(villager, errand, tileSizePx);
+    arrive(villager, errand, tileSizePx, crowd);
     return;
   }
   villager.route = planErrandRoute(villager, world, crowd, rng, tileSizePx);

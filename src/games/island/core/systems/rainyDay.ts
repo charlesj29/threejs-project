@@ -29,6 +29,11 @@ export function rainyActivity(
 /** Out in the rain without shelter: they put on a raincoat. */
 export function wearsRaincoat(villager: Villager, raining: boolean): boolean {
   return (
-    raining && !villager.hidden && villager.activity !== 'shelter' && villager.activity !== 'home'
+    raining &&
+    !villager.hidden &&
+    villager.activity !== 'shelter' &&
+    villager.activity !== 'home' &&
+    // In the hot spring, rain is just part of the soak.
+    villager.activity !== 'soak'
   );
 }

@@ -19,5 +19,8 @@ describe('a rainy day in the village', () => {
     expect(wearsRaincoat(v, false)).toBe(false);
     v.activity = 'shelter';
     expect(wearsRaincoat(v, true)).toBe(false);
+    // Soaking in the hot spring, the rain is just part of it.
+    v.activity = 'soak';
+    expect(wearsRaincoat(v, true)).toBe(false);
   });
 });

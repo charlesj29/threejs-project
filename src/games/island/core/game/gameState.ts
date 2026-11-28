@@ -545,7 +545,7 @@ function openDialog(state: GameState, tileSizePx: number): void {
   state.player.moving = false;
   state.autoWalk = null;
   if (target.kind === 'object' && target.sit) {
-    sitOn(state.player, target.object, tileSizePx);
+    sitOn(state.player, target.object, tileSizePx, state.villagers);
     return;
   }
   if (target.kind === 'object' && target.panel) {

@@ -31,7 +31,8 @@ export type ValidationIssueCode =
   | 'beach-cut-off'
   | 'reachable-area-too-small'
   | 'village-missing'
-  | 'studio-missing';
+  | 'studio-missing'
+  | 'hot-spring-missing';
 
 export interface ValidationIssue {
   readonly code: ValidationIssueCode;
@@ -153,6 +154,11 @@ const checkReachability: Check = ({ size, terrain, objects, cabin, spawn }, rule
   if (unreachableHouse) {
     return issue('door-unreachable', `The door of ${unreachableHouse.kind} cannot be reached`);
   }
+  // The hot spring: someone must be able to walk up to it (a tile beside it reachable).
+  const spring = objects.find((o) => o.kind === 'hot_spring');
+  if (spring && !besideReached(spring, size, reached)) {
+    return issue('door-unreachable', 'Nobody can walk up to the hot spring');
+  }
   // Ledges are impassable: the beach below one must still be reachable around its ends.
   const cutOffBeach = terrain.findIndex(
     (id, i) =>
@@ -176,6 +182,23 @@ const checkStudio: Check = ({ objects }) =>
     ? null
     : issue('studio-missing', 'No room for the studio near the cabin');
 
+/** Every island has the hot spring (one of the places to relax). */
+const checkHotSpring: Check = ({ objects }) =>
+  objects.some((object) => object.kind === 'hot_spring')
+    ? null
+    : issue('hot-spring-missing', 'No room for the hot spring');
+
+/** True if any tile right beside the object (not diagonal) is reached. */
+function besideReached(object: WorldObject, size: GridSize, reached: Uint8Array): boolean {
+  const { width, height } = OBJECT_REGISTRY[object.kind].footprint;
+  const beside: [number, number][] = [];
+  for (let dx = 0; dx < width; dx++)
+    beside.push([object.x + dx, object.y - 1], [object.x + dx, object.y + height]);
+  for (let dy = 0; dy < height; dy++)
+    beside.push([object.x - 1, object.y + dy], [object.x + width, object.y + dy]);
+  return beside.some(([x, y]) => isInBounds(size, x, y) && reached[toIndex(size, x, y)] === 1);
+}
+
 const CHECKS: readonly Check[] = [
   checkBorders,
   checkLandShare,
@@ -186,6 +209,7 @@ const CHECKS: readonly Check[] = [
   checkReachability,
   checkVillage,
   checkStudio,
+  checkHotSpring,
 ];
 
 /** Returns every invariant the map breaks; empty means valid. */

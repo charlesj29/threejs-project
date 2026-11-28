@@ -88,6 +88,14 @@ describe('the village day', () => {
     expect(owl.sitting).not.toBeNull();
   });
 
+  it('takes the night owl for a soak in the hot spring before the evening', () => {
+    const state = villageAt(0.65);
+    wait(state, 120);
+    const owl = byRole(state, 'owl');
+    expect(owl.activity).toBe('soak');
+    expect(owl.sitting?.soaking).toBe(true);
+  });
+
   it('keeps the held night of the day/night button', () => {
     const state = villageAt(0.3);
     setHeldTime(state, MIDNIGHT);

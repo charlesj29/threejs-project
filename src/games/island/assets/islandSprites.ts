@@ -11,6 +11,7 @@ import { paintDeadwoodSprites } from './paintDeadwood';
 import { paintDuckSprites } from './paintDucks';
 import { paintFurnitureSprites } from './paintFurniture';
 import { paintInteriorSprites } from './paintInterior';
+import { paintHotSpringSprites } from './paintHotSpring';
 import { paintHouseSprites } from './paintHouses';
 import { paintInsectSprites } from './paintInsects';
 import { paintBirdSprites } from './paintBirds';
@@ -71,6 +72,7 @@ export function paintIslandSprites(): SpriteSource[] {
     ...paintPlaymateSprites(),
     ...paintPuppySprites(),
     ...paintCoopSprites(),
+    ...paintHotSpringSprites(),
     ...paintMusicSprites(),
     ...paintWaterLightSprites(),
     ...paintCatSprites(),

@@ -1,6 +1,7 @@
 // The nature sounds, built from noise and oscillators (no audio files):
 // steady beds (surf, rain, the fire's rumble) and short events scheduled on
-// the audio clock (a bird's chirps, a cricket's trill, a crackle in the fire).
+// the audio clock (a bird's chirps, a cricket's trill, a crackle in the fire,
+// a bubble rising in the hot spring).
 import type { Rng } from '@/shared/engine/random';
 
 const NOISE_SECONDS = 3;
@@ -169,4 +170,31 @@ export function cricketTrill(
   osc.connect(level).connect(out);
   osc.start(time);
   osc.stop(time + 0.16);
+}
+
+/** The hot spring's soft lapping: a quiet, gently swelling wash of water. */
+export function springBed(context: BaseAudioContext, noise: AudioBuffer, out: AudioNode): void {
+  const body = gain(context, 0.18);
+  swell(context, body.gain, 0.23, 0.06);
+  loopNoise(context, noise, 0.9)
+    .connect(filter(context, 'bandpass', 900, 0.8))
+    .connect(body)
+    .connect(out);
+}
+
+/** One bubble coming up in the warm water: a short, soft "bloop" sliding upwards. */
+export function bubble(context: BaseAudioContext, out: AudioNode, time: number, rng: Rng): void {
+  const osc = context.createOscillator();
+  osc.type = 'sine';
+  const pitch = rng.range(260, 620);
+  const length = rng.range(0.04, 0.08);
+  osc.frequency.setValueAtTime(pitch, time);
+  osc.frequency.exponentialRampToValueAtTime(pitch * rng.range(1.8, 2.6), time + length);
+  const level = gain(context, 0);
+  level.gain.setValueAtTime(0, time);
+  level.gain.linearRampToValueAtTime(rng.range(0.12, 0.25), time + 0.008);
+  level.gain.exponentialRampToValueAtTime(0.001, time + length);
+  osc.connect(level).connect(out);
+  osc.start(time);
+  osc.stop(time + length + 0.02);
 }

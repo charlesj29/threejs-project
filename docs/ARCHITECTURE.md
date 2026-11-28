@@ -231,6 +231,16 @@ flowchart LR
   `content/guidance.ts` + `villagerGreeting`; props drawn by `render/ChoreProps`; steam over the stall's loaves by
   `render/BreadSteam`. Washing lines come from the last generation step, `hangLaundry` (after the
   flowers, so earlier placements never change).
+- **Hot spring:** `generation/steps/placeHotSpring.ts` (after the coop, before the spawn: quiet
+  open grass away from the village and houses, among trees, near a trail; a clear walkable ring;
+  validation requires it and a reachable side). The pool (`hot_spring`, 4×3, `ground` so it lies
+  flat, but solid) is a `sit` seat with `soak`: `seat.ts` puts the sitter on one of two seats in
+  the water (`sitting.soaking`, never two on one seat). `render/HotSpring` draws the pool's near
+  half (`hot_spring_front`, everything below the water line) at the pool's bottom depth, so it
+  hides a soaker from the chest down (`CharacterSprite` lifts soakers by `SOAK_LIFT_PX`), plus
+  ripple rings and blended steam (`mist_steam_*`, one mist material per puff; thickness from
+  `render/springSteam.ts`). The night owl soaks there late in the afternoon (`soak` activity).
+  Sound: the `spring` layer (lapping bed + bubbles) by distance.
 - **Calm (D67):** `core/systems/weather.ts` (clear spells, showers with an eased intensity,
   `rainyTint` used by `DayNightLighting`); `render/Rain` (instanced streaks sized to the view,
   lake rings) and `render/CloudShadows`. `core/systems/tour.ts` (stops, `tourPoint`) and

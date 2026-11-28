@@ -13,6 +13,7 @@ export const ACTIVITY_GREETINGS: Readonly<Record<string, string>> = {
   fish: "Shh... I think something's biting.",
   read: 'Just a few more pages. Slow afternoons are the best.',
   gather: "Lovely evening, isn't it? The lights are coming on.",
+  soak: 'Ahh... nothing like a warm soak before the evening. Hop in!',
 };
 
 /** By the part of the day: for wandering villagers, and the night owl after dark. */
@@ -48,6 +49,10 @@ export const VILLAGER_TALKS: readonly (readonly (readonly string[])[])[] = [
       "It's the log lodge with the cedar roof, {studio} of here. Charles's work is all inside.",
     ],
     ['I love the phones on the shelf in the workspace. Each one is a project of his!'],
+    [
+      'Have you found the hot spring? It sits out among the trees, with a little stone lantern.',
+      'I go for a soak every afternoon. Step in, the water is lovely and warm.',
+    ],
     ['Say hello to Charles if you see him.'],
   ],
   // The baker.

@@ -1,6 +1,6 @@
 // What the island sounds like where you are: surf louder near the sea, birds
-// by day, crickets at night, rain in a shower, and the crackle of a fire when
-// you're in a room with one. Indoors, the outside is muffled. Pure: the UI
+// by day, crickets at night, rain in a shower, the crackle of a fire when
+// you're in a room with one, and the hot spring bubbling as you come near. Indoors, the outside is muffled. Pure: the UI
 // samples this now and then and hands the levels to the audio.
 import { distanceField, EIGHT_DIRECTIONS } from '@/shared/engine/grid';
 import type { IslandConfig } from '../config';
@@ -24,6 +24,8 @@ export interface SoundscapeLevels {
   readonly bell: number;
   /** The guitar at the evening gathering, louder as you get near the player. */
   readonly guitar: number;
+  /** The hot spring, louder as you get near it. */
+  readonly spring: number;
 }
 
 /** Steps (8-way) from every tile to the sea, and to the village. */
@@ -105,6 +107,19 @@ function fireLevel(
   return level;
 }
 
+/** The hot spring, by how far the listener is from the middle of the pool. */
+function springLevel(
+  listener: Listener,
+  settings: IslandConfig['ambience'],
+  tileSizePx: number,
+): number {
+  const spring = listener.world.objects.find((object) => object.kind === 'hot_spring');
+  if (!spring) return 0;
+  const dx = (spring.x + 2) * tileSizePx - listener.x;
+  const dy = (spring.y + 1.5) * tileSizePx - listener.y;
+  return fadeByTiles(Math.hypot(dx, dy) / tileSizePx, settings.spring);
+}
+
 /**
  * The mix for a listener. `night` is 0 (day) .. 1 (night), `rain` the
  * shower's intensity; `seaDistance` comes from `seaDistances` of the island.
@@ -134,6 +149,7 @@ export function soundscapeLevels(
       steps: 1,
       bell: damp,
       guitar: 0,
+      spring: 0,
     };
   }
   const tx = Math.floor(listener.x / tileSizePx);
@@ -161,5 +177,6 @@ export function soundscapeLevels(
           settings.guitar,
         )
       : 0,
+    spring: springLevel(listener, settings, tileSizePx),
   };
 }

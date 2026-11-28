@@ -90,4 +90,22 @@ describe('soundscape', () => {
     expect(near.rain).toBeLessThan(1);
     expect(near.waves).toBeLessThan(settings.waves.floor);
   });
+
+  it('bubbles by the hot spring, fading out as you walk away (and not indoors)', () => {
+    const spring = island.objects.find((o) => o.kind === 'hot_spring');
+    if (!spring) throw new Error('no hot spring');
+    const middle = { x: (spring.x + 2) * TILE, y: (spring.y + 1.5) * TILE };
+    const near = soundscapeLevels({ world: island, ...middle }, 0, 0, sea, settings, TILE);
+    const away = {
+      world: island,
+      x: middle.x,
+      y: middle.y + (settings.spring.farTiles + 1) * TILE,
+    };
+    expect(near.spring).toBe(1);
+    expect(soundscapeLevels(away, 0, 0, sea, settings, TILE).spring).toBe(0);
+    const definition = INTERIORS.cottage;
+    if (!definition) throw new Error('no cottage');
+    const indoors = { world: buildInteriorWorld(definition), x: 3 * TILE, y: 3 * TILE };
+    expect(soundscapeLevels(indoors, 0, 0, sea, settings, TILE).spring).toBe(0);
+  });
 });

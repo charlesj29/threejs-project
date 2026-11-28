@@ -18,6 +18,8 @@ export type Activity =
   | 'fish'
   | 'read'
   | 'gather'
+  /** A soak in the hot spring before the evening. */
+  | 'soak'
   | 'owl'
   | 'home'
   /** Out of the rain under the market stall's awning. */

@@ -45,6 +45,8 @@ export const OBJECT_KINDS = [
   'cat_sleeping',
   'laundry_line',
   'chicken_coop',
+  'hot_spring',
+  'stone_lantern',
   'desk_laptop',
   'phone_wall',
   'tech_shelf',
@@ -99,13 +101,14 @@ export interface ObjectDefinition {
 
 /**
  * What Space does: show a message of one or more pages, open a part of the
- * portfolio in the panel, or sit down (benches). `pagePerTile`: each tile of the object opens its own page (the
- * phones on the shelf: one project per phone).
+ * portfolio in the panel, or sit down (benches; `soak`: step into the hot spring and sit in the
+ * water). `pagePerTile`: each tile of the object opens its own page (the phones on the shelf: one
+ * project per phone).
  */
 export type Interaction =
   | { readonly pages: readonly string[] }
   | { readonly panel: PanelId; readonly pagePerTile?: boolean }
-  | { readonly sit: true };
+  | { readonly sit: true; readonly soak?: true };
 
 const SINGLE_TILE = { width: 1, height: 1 } as const;
 
@@ -265,6 +268,20 @@ export const OBJECT_REGISTRY: Readonly<Record<ObjectKind, ObjectDefinition>> = {
   chicken_coop: {
     ...solid('chicken_coop', 'Hen house', 'structure', '#c44434', { width: 2, height: 2 }),
     interaction: says('The hens cluck softly. There might be an egg in the straw tomorrow.'),
+  },
+  // A warm pool ringed with rocks, lying flat in the grass (people soak in it, so it is drawn
+  // under them; HotSpring.tsx adds its near rim in front). You can't walk through it.
+  hot_spring: {
+    ...decoration('hot_spring', 'Hot spring', 'ground', '#7fd0d8'),
+    footprint: { width: 4, height: 3 },
+    blocksMovement: true,
+    interaction: { sit: true, soak: true },
+  },
+  // Beside the hot spring: its window glows after dark.
+  stone_lantern: {
+    ...solid('stone_lantern', 'Stone lantern', 'structure', '#a8a49c'),
+    litAtNight: true,
+    interaction: says('A little stone lantern. Someone lights it every evening.'),
   },
   cat_sleeping: {
     ...solid('cat_sleeping', 'Sleeping cat', 'structure', '#e0893a'),
