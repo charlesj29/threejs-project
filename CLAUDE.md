@@ -45,7 +45,7 @@ Deploy: pushing `master` runs `.github/workflows/deploy.yml` (check, then GitHub
 ## Generation & world conventions
 
 - **The live world is `src/games/island/data/island.map.json`**, never generated at runtime.
-  `npm run bake:island` re-bakes the default seed (`generation.authoringSeed`, 3068120830; overwrites
+  `npm run bake:island` re-bakes the default seed (`generation.authoringSeed`, 4178021422; overwrites
   hand edits); `npm run overview:island -- <out.png>` draws a contact sheet to compare seeds.
   Visitors can also play generated islands: R or the dice button opens `/?seed=N` (shareable),
   Home goes back to `/`. Every seed must pass validation (village included).

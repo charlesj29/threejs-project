@@ -84,7 +84,7 @@ Change a value, save, and the page updates (`npm run dev`).
 
 The live island is a saved map file, so layout settings (`village`, `trees`, `lake`, `dock`,
 `decorations`, ...) only change it after re-baking: run **`npm run bake:island`**. Re-baking
-rebuilds the default island from its seed (`generation.authoringSeed`, 3068120830) and replaces any hand
+rebuilds the default island from its seed (`generation.authoringSeed`, 4178021422) and replaces any hand
 edits. Islands opened with the dice button use the settings straight away.
 
 ## Not in the config file
