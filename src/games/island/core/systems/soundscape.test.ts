@@ -91,6 +91,16 @@ describe('soundscape', () => {
     expect(near.waves).toBeLessThan(settings.waves.floor);
   });
 
+  it('crackles by the campfire while it burns, and not by day', () => {
+    const fire = island.objects.find((o) => o.kind === 'campfire');
+    if (!fire) throw new Error('no campfire');
+    const by = { world: island, x: (fire.x + 1) * TILE, y: (fire.y + 1) * TILE };
+    const far = { ...by, y: by.y + (settings.campfire.farTiles + 1) * TILE };
+    expect(soundscapeLevels(by, 1, 0, sea, settings, TILE, null, true).fire).toBe(1);
+    expect(soundscapeLevels(far, 1, 0, sea, settings, TILE, null, true).fire).toBe(0);
+    expect(soundscapeLevels(by, 0, 0, sea, settings, TILE, null, false).fire).toBe(0);
+  });
+
   it('bubbles by the hot spring, fading out as you walk away (and not indoors)', () => {
     const spring = island.objects.find((o) => o.kind === 'hot_spring');
     if (!spring) throw new Error('no hot spring');

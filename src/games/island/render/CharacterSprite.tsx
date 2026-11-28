@@ -8,17 +8,10 @@ import type { GameState } from '../core/game/gameState';
 import { playerFrameIndex } from '../core/systems/animation';
 import type { LightingUniforms } from './lighting';
 import { PLAYER_SHADOW } from './objectShadows';
+import { seatLiftPx } from './seatLift';
 import { createSpriteGeometry, setSpriteGeometryFrame } from './spriteGeometry';
 import { createShadowMaterial, createSpriteMaterial, setAnimationFrame } from './spriteMaterial';
 import { SHADOW_Z, standingSpriteZ, worldYFromMapPx } from './worldSpace';
-
-/** How far a sitting character is lifted, so the hips sit on the bench seat. */
-const SIT_LIFT_PX = 8;
-/**
- * Soaking in the hot spring: lifted so the chest sits on the water line (the seat's feet are 13 px
- * below it; the sprite's chest row is 6 px above its bottom), the rest hidden by the near rim.
- */
-const SOAK_LIFT_PX = 7;
 
 interface CharacterSpriteProps {
   /** The player or a villager: anything that walks and animates like the player. */
@@ -80,7 +73,7 @@ export function CharacterSprite({
     const y = body.previousY + (body.y - body.previousY) * t;
     const footY = Math.round(playerFootY(y, ISLAND_CONFIG.player));
     // Sitting on a bench: drawn up on the seat (depth stays at the feet, in front of the bench).
-    const lift = body.sitting ? (body.sitting.soaking ? SOAK_LIFT_PX : SIT_LIFT_PX) : 0;
+    const lift = seatLiftPx(body);
     mesh.position.set(x, worldYFromMapPx(footY - lift) + frame.height / 2, standingSpriteZ(footY));
     if (shadowRef.current) shadowRef.current.visible = !body.sitting;
     shadowRef.current?.position.set(

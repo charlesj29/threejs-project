@@ -8,6 +8,7 @@ import { buildChickenCoop } from './steps/buildChickenCoop';
 import { decorateCabin } from './steps/decorateCabin';
 import { layPaths } from './steps/layPaths';
 import { placeCabin } from './steps/placeCabin';
+import { placeCampfire } from './steps/placeCampfire';
 import { placeDock } from './steps/placeDock';
 import { placeHotSpring } from './steps/placeHotSpring';
 import { placeLedges } from './steps/placeLedges';
@@ -44,6 +45,7 @@ export const GENERATION_STEPS: readonly GenerationStep[] = [
   hangLaundry,
   buildChickenCoop,
   placeHotSpring,
+  placeCampfire,
   chooseSpawn,
 ];
 

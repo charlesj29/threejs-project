@@ -9,6 +9,7 @@ import { playerFootY } from '../core/entities/player';
 import type { GameState } from '../core/game/gameState';
 import { eveningMusician } from '../core/systems/eveningMusic';
 import type { LightingUniforms } from './lighting';
+import { seatLiftPx } from './seatLift';
 import { createSpriteGeometry } from './spriteGeometry';
 import { createSpriteMaterial } from './spriteMaterial';
 import { standingSpriteZ, worldYFromMapPx } from './worldSpace';
@@ -66,7 +67,9 @@ export function EveningMusic({ state, atlas, lighting }: EveningMusicProps): JSX
     });
     if (!player || !guitar.current) return;
     const x = Math.round(player.x);
-    const feet = Math.round(playerFootY(player.y, ISLAND_CONFIG.player));
+    // Seated (round the campfire): the guitar goes up onto the lap with them.
+    const ground = Math.round(playerFootY(player.y, ISLAND_CONFIG.player));
+    const feet = ground - seatLiftPx(player);
     const left = player.facing === 'left';
     const away = player.facing === 'up';
     // The guitar across the body, the neck pointing the way they face.
@@ -78,7 +81,7 @@ export function EveningMusic({ state, atlas, lighting }: EveningMusicProps): JSX
       guitarFrame,
       gripLeft,
       feet - HANDS.up - GUITAR_GRIP.y,
-      standingSpriteZ(feet) + (away ? -LAYER : LAYER),
+      standingSpriteZ(ground) + (away ? -LAYER : LAYER),
     );
     // Notes rising one after another, each in its own colour.
     const seconds = clock.elapsedTime;

@@ -96,6 +96,33 @@ describe('the village day', () => {
     expect(owl.sitting?.soaking).toBe(true);
   });
 
+  it('on a campfire evening, sits the village round the beach campfire', () => {
+    const state = villageAt(0.74);
+    state.day = 0;
+    wait(state, 150);
+    const fire = state.world.objects.find((o) => o.kind === 'campfire');
+    if (!fire) throw new Error('no campfire');
+    for (const role of ['baker', 'keeper', 'owl']) {
+      const villager = byRole(state, role);
+      expect(villager.sitting, role).not.toBeNull();
+      expect(Math.abs(villager.x / TILE - (fire.x + 1)), role).toBeLessThan(4);
+      expect(Math.abs(villager.y / TILE - (fire.y + 1)), role).toBeLessThan(4);
+    }
+  });
+
+  it('on other evenings, gathers round the well', () => {
+    const state = villageAt(0.74);
+    state.day = 1;
+    wait(state, 150);
+    const fire = state.world.objects.find((o) => o.kind === 'campfire');
+    if (!fire) throw new Error('no campfire');
+    const keeper = byRole(state, 'keeper');
+    expect(keeper.activity).toBe('gather');
+    expect(Math.abs(keeper.x / TILE - fire.x) + Math.abs(keeper.y / TILE - fire.y)).toBeGreaterThan(
+      4,
+    );
+  });
+
   it('keeps the held night of the day/night button', () => {
     const state = villageAt(0.3);
     setHeldTime(state, MIDNIGHT);

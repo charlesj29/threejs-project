@@ -1,11 +1,9 @@
-import { distanceField, EIGHT_DIRECTIONS, floodFill, toIndex } from '@/shared/engine/grid';
-import { computeBlockedMask } from '../../world/collision';
+import { distanceField, EIGHT_DIRECTIONS, toIndex } from '@/shared/engine/grid';
 import { OBJECT_REGISTRY } from '../../world/objects';
 import { isWalkableTile, TileId } from '../../world/tiles';
-import { villageTiles } from '../../world/village';
-import { getDoorFrontTile, NO_OBJECT } from '../../world/world';
 import { createStepRng, type GenerationContext, type GenerationStep } from '../context';
 import { addObject, objectLayerWithout } from '../objectLayer';
+import { distanceFromBusy, isClear, makesWay, reachedFromCabin } from '../quietSpots';
 
 /** The pool (4×3) and its stone lantern just right of its far corner: a 5×3 patch. */
 const POOL = OBJECT_REGISTRY.hot_spring.footprint;
@@ -18,9 +16,6 @@ const TREE_RADIUS = 4;
 const MAX_TREES = 8;
 /** Each tile further from the nearest trail costs this much score (it should be findable). */
 const TRAIL_COST = 0.3;
-/** Meadow decorations (flowers, grass tufts, fallen branches) give way to the pool. */
-const SOFT = new Set(['flower', 'grass', 'ground']);
-
 interface Spot {
   readonly x: number;
   readonly y: number;
@@ -29,37 +24,19 @@ interface Spot {
 
 /** Every patch that fits, at least `gap` tiles from the village, the cottage and the workspace. */
 function findSpots(context: GenerationContext, gap: number, ground: ReadonlySet<number>): Spot[] {
-  const { size, terrain, objects, occupancy, reserved } = context;
-  const busy = new Set(context.village ? villageTiles(context.village, size) : []);
-  for (const o of objects) {
-    if (OBJECT_REGISTRY[o.kind].category !== 'building') continue;
-    const { footprint } = OBJECT_REGISTRY[o.kind];
-    for (let dy = 0; dy < footprint.height; dy++) {
-      for (let dx = 0; dx < footprint.width; dx++) busy.add(toIndex(size, o.x + dx, o.y + dy));
-    }
-  }
-  const fromBusy = distanceField(size, (i) => busy.has(i), EIGHT_DIRECTIONS);
+  const { size, terrain, objects, reserved } = context;
+  const fromBusy = distanceFromBusy(context);
   const fromTrail = distanceField(size, (i) => terrain[i] === TileId.Path, EIGHT_DIRECTIONS);
-  const blocked = computeBlockedMask(size, terrain, objects);
-  const door = context.cabin ? getDoorFrontTile(context.cabin) : null;
-  const reached = door
-    ? floodFill(size, [toIndex(size, door.x, door.y)], (i) => blocked[i] === 0)
-    : new Uint8Array(terrain.length);
+  const reached = reachedFromCabin(context);
   const trees = objects.filter((o) => OBJECT_REGISTRY[o.kind].category === 'tree');
 
   const at = (x: number, y: number): number | null =>
     x < 0 || y < 0 || x >= size.width || y >= size.height ? null : toIndex(size, x, y);
-  /** Nothing there, or only a meadow decoration that can make way. */
-  const clear = (i: number): boolean => {
-    const id = occupancy[i] ?? NO_OBJECT;
-    const object = id === NO_OBJECT ? undefined : objects[id];
-    return !object || SOFT.has(OBJECT_REGISTRY[object.kind].category);
-  };
   const fits = (left: number, top: number): boolean => {
     for (let y = top - MARGIN; y < top + PATCH.height + MARGIN; y++) {
       for (let x = left - MARGIN; x < left + PATCH.width + MARGIN; x++) {
         const i = at(x, y);
-        if (i === null || !clear(i) || (fromBusy[i] ?? 0) < gap) return false;
+        if (i === null || !isClear(context, i) || (fromBusy[i] ?? 0) < gap) return false;
         const inPatch = x >= left && y >= top && x < left + PATCH.width && y < top + PATCH.height;
         // The pool and the lantern stand on open ground; under the lantern, the corner stays open.
         const underPool = inPatch && x < left + POOL.width;
@@ -118,10 +95,7 @@ export const placeHotSpring: GenerationStep = (context) => {
   const spot = rng.pick(spots.slice(0, choices));
   const inPatch = (x: number, y: number): boolean =>
     x >= spot.x && y >= spot.y && x < spot.x + PATCH.width && y < spot.y + PATCH.height;
-  const layer = objectLayerWithout(
-    context,
-    (o) => SOFT.has(OBJECT_REGISTRY[o.kind].category) && inPatch(o.x, o.y),
-  );
+  const layer = objectLayerWithout(context, (o) => makesWay(o) && inPatch(o.x, o.y));
   addObject(layer, 'hot_spring', spot.x, spot.y);
   addObject(layer, 'stone_lantern', spot.x + POOL.width, spot.y);
   return { ...context, objects: layer.objects, occupancy: layer.occupancy };

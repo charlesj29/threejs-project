@@ -1,6 +1,7 @@
 // What the island sounds like where you are: surf louder near the sea, birds
 // by day, crickets at night, rain in a shower, the crackle of a fire when
-// you're in a room with one, and the hot spring bubbling as you come near. Indoors, the outside is muffled. Pure: the UI
+// you're in a room with one (or by the beach campfire while it burns), and the
+// hot spring bubbling as you come near. Indoors, the outside is muffled. Pure: the UI
 // samples this now and then and hands the levels to the audio.
 import { distanceField, EIGHT_DIRECTIONS } from '@/shared/engine/grid';
 import type { IslandConfig } from '../config';
@@ -107,6 +108,19 @@ function fireLevel(
   return level;
 }
 
+/** The campfire's crackle, by how far the listener is from the fire. */
+function campfireLevel(
+  listener: Listener,
+  settings: IslandConfig['ambience'],
+  tileSizePx: number,
+): number {
+  const fire = listener.world.objects.find((object) => object.kind === 'campfire');
+  if (!fire) return 0;
+  const dx = (fire.x + 1) * tileSizePx - listener.x;
+  const dy = (fire.y + 1) * tileSizePx - listener.y;
+  return fadeByTiles(Math.hypot(dx, dy) / tileSizePx, settings.campfire);
+}
+
 /** The hot spring, by how far the listener is from the middle of the pool. */
 function springLevel(
   listener: Listener,
@@ -132,6 +146,8 @@ export function soundscapeLevels(
   settings: IslandConfig['ambience'],
   tileSizePx: number,
   musician: { readonly x: number; readonly y: number } | null = null,
+  /** The beach campfire is burning (dusk to dawn). */
+  campfireLit = false,
 ): SoundscapeLevels {
   const day = 1 - night;
   const birds = day * (1 - rain);
@@ -166,7 +182,7 @@ export function soundscapeLevels(
     birds,
     crickets,
     rain,
-    fire: 0,
+    fire: campfireLit ? campfireLevel(listener, settings, tileSizePx) : 0,
     chimes: village * (1 - 0.5 * rain),
     chatter: village * day * (1 - rain),
     steps: 1,

@@ -55,6 +55,8 @@ import { buildInteriorWorld, INTERIORS } from '../world/interiors';
 import { checkDoors, ISLAND_MAP, stepTransition } from './mapTravel';
 import { stepIdleTour } from './idleTour';
 import { sitOn, standUp } from '../systems/seat';
+import { SEATS_TAKEN } from '../content/guidance';
+import { campfireEvening } from '../systems/campfire';
 import { updateSocial } from '../systems/villagerSocial';
 import {
   roamTiles,
@@ -101,6 +103,8 @@ export interface GameState {
   autoWalk: AutoWalk | null;
   /** Fraction of a day (0 = midnight, 0.5 = noon); keeps running in every day/night mode. */
   timeOfDay: number;
+  /** Days gone by since arriving (counts up at midnight): some evenings are campfire evenings. */
+  day: number;
   /**
    * The time the scene shows when the day/night button holds day or night
    * (null: follow the clock). Villagers keep to it, so a held night is quiet.
@@ -222,6 +226,7 @@ export function createGameState(world: World, config: IslandConfig): GameState {
     overlayOpen: false,
     autoWalk: null,
     timeOfDay: config.dayNight.startTime,
+    day: 0,
     heldTime: null,
     routinePlaces: routinePlaces(world, roam),
     villagers: createVillagers(world, roam, config.map.tileSizePx),
@@ -264,11 +269,13 @@ export function stepGame(state: GameState, stepSeconds: number, config: IslandCo
   const tileSizePx = config.map.tileSizePx;
   player.previousX = player.x;
   player.previousY = player.y;
+  const before = state.timeOfDay;
   state.timeOfDay = advanceTimeOfDay(
     state.timeOfDay,
     stepSeconds,
     config.dayNight.dayLengthSeconds,
   );
+  if (state.timeOfDay < before) state.day += 1;
   updateWeather(state.weather, state.weatherRng, stepSeconds, config.weather);
   stepIdleTour(state, stepSeconds, config);
   stepVillagers(state, stepSeconds, config);
@@ -497,6 +504,7 @@ function stepVillagers(state: GameState, stepSeconds: number, config: IslandConf
       config.villagerDay,
       tileSizePx,
       rain,
+      campfireEvening(state.day, config.campfire),
     );
     updateVillager(
       villager,
@@ -545,7 +553,9 @@ function openDialog(state: GameState, tileSizePx: number): void {
   state.player.moving = false;
   state.autoWalk = null;
   if (target.kind === 'object' && target.sit) {
-    sitOn(state.player, target.object, tileSizePx, state.villagers);
+    if (!sitOn(state.player, target.object, tileSizePx, state.villagers)) {
+      state.dialog = { pages: [SEATS_TAKEN], page: 0 };
+    }
     return;
   }
   if (target.kind === 'object' && target.panel) {

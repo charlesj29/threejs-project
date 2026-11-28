@@ -27,9 +27,10 @@
 - **M4 follow-ups resolved (2026-11-21):** the user measured ~240 FPS with F3 on their laptop;
   the project is pushed to GitHub `origin/master` (the only branch; `main` no longer exists). Push only
   when the user asks. **Next:** pick new work from `docs/ROADMAP.md` with the user.
-- **Chill places (agreed 2026-11-28):** 1. hot spring ✅, 2. beach campfire, 3. stargazing hill
-  (one commit each). **Next:** the beach campfire (plan agreed: fire ring + log seats on the sand,
-  lit at dusk, crackle nearby; some evenings the village gathers there with the guitar).
+- **Chill places (agreed 2026-11-28):** 1. hot spring ✅, 2. beach campfire ✅, 3. stargazing hill
+  (one commit each). **Next:** the stargazing hill (plan agreed: a blanket on a quiet rise; lie
+  down and the view fades to the sky above: stars, constellations and shooting stars at night,
+  drifting clouds by day, warm colours at dawn and dusk; move or tap to sit up).
 
 ## Milestones
 
@@ -91,6 +92,29 @@
   M2. A stream was rejected because the brief requires the lake not to touch the sea.
 
 ## Session log
+
+### 2026-11-28 — The beach campfire (user request; second of three chill places)
+
+- A ring of stones with a log seat and two log stools round it, on a sandy patch at the shore,
+  as near the village as there is room (a new step, `placeCampfire`, after the hot spring; its
+  patch turns to sand and joins the beach, with a short sandy strip if there's a gap; every seed
+  has one; validation requires it and a way up to every seat). The default island is re-baked:
+  only the campfire's patch changed.
+- It burns from dusk until dawn: flames dancing, sparks flying up, a soft warm glow on the sand
+  (strongest in the dark), and a crackle you hear nearby. By day, a thin curl of smoke.
+- Every other evening (the first one too) the village gathers round the fire instead of the
+  well: they sit on the log and the stools, the guitar comes along (held on the lap, notes
+  floating up), and the night owl stays by the fire after the others go home. The baker mentions
+  it. You can sit on any free seat (Space or a tap); the stools face the fire. A full seat says
+  "Every seat is taken just now." (two people never share a seat any more, benches included).
+- Settings: `campfire` (placement, burning times, every how many evenings, glow, sparks),
+  `ambience.campfire`.
+- **Verified:** typecheck, lint, tests (layout on six seeds, sandy and by the sea, only its patch
+  and strip change, required by validation; burning times; campfire evenings; days counted at
+  midnight; seats facing the fire, never shared; the village sitting round it on a campfire
+  evening and at the well otherwise; the crackle), build; every seed 1–80 and the default get one;
+  browser: by day (embers and smoke), the evening gathering with the guitar, at night sitting on a
+  stool with the owl; console clean.
 
 ### 2026-11-28 — CV download name (user request)
 

@@ -32,7 +32,8 @@ export type ValidationIssueCode =
   | 'reachable-area-too-small'
   | 'village-missing'
   | 'studio-missing'
-  | 'hot-spring-missing';
+  | 'hot-spring-missing'
+  | 'campfire-missing';
 
 export interface ValidationIssue {
   readonly code: ValidationIssueCode;
@@ -159,6 +160,14 @@ const checkReachability: Check = ({ size, terrain, objects, cabin, spawn }, rule
   if (spring && !besideReached(spring, size, reached)) {
     return issue('door-unreachable', 'Nobody can walk up to the hot spring');
   }
+  // The campfire's seats: someone must be able to walk up to each one.
+  const seat = objects.find(
+    (o) =>
+      OBJECT_REGISTRY[o.kind].interaction !== undefined &&
+      o.kind.startsWith('log_') &&
+      !besideReached(o, size, reached),
+  );
+  if (seat) return issue('door-unreachable', 'Nobody can walk up to a seat by the campfire');
   // Ledges are impassable: the beach below one must still be reachable around its ends.
   const cutOffBeach = terrain.findIndex(
     (id, i) =>
@@ -199,6 +208,12 @@ function besideReached(object: WorldObject, size: GridSize, reached: Uint8Array)
   return beside.some(([x, y]) => isInBounds(size, x, y) && reached[toIndex(size, x, y)] === 1);
 }
 
+/** Every island has the beach campfire (the village gathers there some evenings). */
+const checkCampfire: Check = ({ objects }) =>
+  objects.some((object) => object.kind === 'campfire')
+    ? null
+    : issue('campfire-missing', 'No room for the campfire');
+
 const CHECKS: readonly Check[] = [
   checkBorders,
   checkLandShare,
@@ -210,6 +225,7 @@ const CHECKS: readonly Check[] = [
   checkVillage,
   checkStudio,
   checkHotSpring,
+  checkCampfire,
 ];
 
 /** Returns every invariant the map breaks; empty means valid. */

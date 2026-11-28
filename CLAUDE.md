@@ -107,7 +107,8 @@ Deploy: pushing `master` runs `.github/workflows/deploy.yml` (check, then GitHub
   `GROUND_DECAL_Z`. Hard alpha only (`discard`) — no transparency sorting. One exception:
   soft cast shadows (`shadow_*` sprites, `createShadowMaterial`, `SHADOW_Z`) blend, with a
   strict depth test so overlapping shadows never darken twice. Cloud shadows reuse that; morning
-  mist (`mist_*`, `createMistMaterial`) blends too, faded as a whole by `uOpacity`. Trees, bushes
+  mist (`mist_*`, `createMistMaterial`) blends too, faded as a whole by `uOpacity`; so do soft
+  glows (`glow_*`, e.g. the campfire's, drawn with the mist material untinted (`DAYLIGHT`)). Trees, bushes
   and grass use `createSwayMaterial` (the top edge leans with the wind; the base stays rooted).
 - Keep the camera pixel-perfect (`shared/render/PixelPerfectCamera`): whole-number pixel
   scales, snapped positions. The canvas is `flat` + `linear` (exact palette colours).

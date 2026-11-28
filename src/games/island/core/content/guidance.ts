@@ -62,9 +62,16 @@ export const VILLAGER_TALKS: readonly (readonly (readonly string[])[])[] = [
       "Charles came by for a loaf. He's busy in his workspace, {studio} of here.",
     ],
     ["Looking for Charles's work? Walk {studio} to the log lodge with the carved sign."],
+    [
+      'Some evenings we light the campfire down by the beach.',
+      'Come and sit with us when the sun goes down. There is always a seat for you!',
+    ],
     ['Come back for a cinnamon roll sometime.'],
   ],
 ];
+
+/** Sitting down where every seat is taken. */
+export const SEATS_TAKEN = 'Every seat is taken just now.';
 
 /** The places signposts point to. */
 export const SIGN_LABELS = {

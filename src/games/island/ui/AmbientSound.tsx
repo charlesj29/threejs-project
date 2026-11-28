@@ -4,7 +4,8 @@ import { ISLAND_CONFIG } from '../core/config';
 import type { GameState } from '../core/game/gameState';
 import { cameraFocus } from '../core/game/idleTour';
 import { ISLAND_MAP } from '../core/game/mapTravel';
-import { targetLighting } from '../core/systems/dayNight';
+import { campfireLit } from '../core/systems/campfire';
+import { shownTime, targetLighting } from '../core/systems/dayNight';
 import {
   groundAt,
   seaDistances,
@@ -84,6 +85,7 @@ export function AmbientSound({ game }: { readonly game: GameState }): null {
           settings,
           ISLAND_CONFIG.map.tileSizePx,
           eveningMusician(game.villagers),
+          campfireLit(shownTime(mode, game.timeOfDay), ISLAND_CONFIG.campfire),
         ),
       );
     };

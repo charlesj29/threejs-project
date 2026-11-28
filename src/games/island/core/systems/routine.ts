@@ -2,7 +2,7 @@
 // clock: the baker minds the market stall in the morning, the keeper fetches
 // water and sweeps the doorstep, the night owl fishes off the dock, reads on a
 // bench, has a soak in the hot spring and stays out on the plaza at night; in the evening everyone gathers
-// round the well, and at night the others go home (indoors, out of sight).
+// round the well (or, some evenings, on the seats round the beach campfire), and at night the others go home (indoors, out of sight).
 // Pure: the fixed step moves them (through `wander.ts`); this decides where to.
 import { toIndex, type TilePoint } from '@/shared/engine/grid';
 import type { Rng } from '@/shared/engine/random';
@@ -35,6 +35,8 @@ export interface RoutinePlaces {
   readonly gather: readonly Spot[];
   /** The hot spring, and where to stand before stepping in. */
   readonly spring: { readonly object: WorldObject; readonly spot: Spot } | null;
+  /** Sitting round the campfire: one errand per seat (walk up in front of it, then sit). */
+  readonly campfireSeats: readonly Errand[];
 }
 
 export interface Spot {
@@ -260,6 +262,7 @@ export function routinePlaces(world: World, roam: ReadonlySet<number>): RoutineP
   // Step in from the front if there's room (walking up from below), else from any side.
   const springSpots = springObject ? spotsAround(springObject, world, roam) : [];
   const springSpot = springSpots.find((s) => s.facing === 'up') ?? springSpots[0];
+  const campfireSeats = campfireSeatErrands(world, roam);
   return {
     stall: stall ? (spotsAround(stall, world, roam)[0] ?? null) : null,
     well: well ? (spotsAround(well, world, roam).find((s) => s.facing !== 'down') ?? null) : null,
@@ -269,7 +272,37 @@ export function routinePlaces(world: World, roam: ReadonlySet<number>): RoutineP
     bench,
     gather,
     spring: springObject && springSpot ? { object: springObject, spot: springSpot } : null,
+    campfireSeats,
   };
+}
+
+/** How far from the campfire (tiles) its seats are looked for. */
+const CAMPFIRE_SEAT_RADIUS = 3;
+
+/**
+ * The campfire's seats as errands: stand just below a seat tile (the log has
+ * two), then sit on it, facing the way the seat faces.
+ */
+function campfireSeatErrands(world: World, roam: ReadonlySet<number>): Errand[] {
+  const fire = world.objects.find((object) => object.kind === 'campfire');
+  if (!fire) return [];
+  const seats = world.objects.filter(
+    (o) =>
+      (o.kind === 'log_bench' || o.kind === 'log_stool_right' || o.kind === 'log_stool_left') &&
+      Math.abs(o.x - fire.x) <= CAMPFIRE_SEAT_RADIUS &&
+      Math.abs(o.y - fire.y) <= CAMPFIRE_SEAT_RADIUS,
+  );
+  const errands: Errand[] = [];
+  for (const seat of seats) {
+    const { footprint, interaction } = OBJECT_REGISTRY[seat.kind];
+    const facing = interaction && 'sit' in interaction ? (interaction.faces ?? 'down') : 'down';
+    for (let i = 0; i < footprint.width; i++) {
+      const goal = { x: seat.x + i, y: seat.y + footprint.height };
+      if (!open(world, roam, goal.x, goal.y)) continue;
+      errands.push({ goal, facing, bench: seat, goInside: false });
+    }
+  }
+  return errands;
 }
 
 const errandAt = (spot: Spot): Errand => ({
@@ -290,8 +323,13 @@ export function errandFor(
   activity: Activity,
   places: RoutinePlaces,
   gatherIndex: number,
+  campfire = false,
 ): Errand | null {
   const gatherSpot = places.gather[gatherIndex % Math.max(1, places.gather.length)];
+  // A campfire evening: the gathering (and the night owl) sit round the fire instead.
+  const seats = places.campfireSeats;
+  const fireSeat = campfire && seats.length > 0 ? seats[gatherIndex % seats.length] : undefined;
+  if (fireSeat && (activity === 'gather' || activity === 'owl')) return fireSeat;
   switch (activity) {
     case 'bake':
       return places.stall ? errandAt(places.stall) : null;
@@ -336,6 +374,7 @@ function switchActivity(
   activity: Activity,
   places: RoutinePlaces,
   tileSizePx: number,
+  campfire: boolean,
 ): void {
   standUp(villager);
   if (villager.hidden) {
@@ -347,7 +386,7 @@ function switchActivity(
     villager.previousY = villager.y;
   }
   villager.activity = activity;
-  villager.errand = errandFor(villager, activity, places, villager.id);
+  villager.errand = errandFor(villager, activity, places, villager.id, campfire);
   villager.atErrand = false;
   villager.route = [];
   villager.stuckTime = 0;
@@ -377,13 +416,15 @@ export function updateRoutine(
   schedule: IslandConfig['villagerDay'],
   tileSizePx: number,
   rain: RainSettings = { raining: false, hurryFactor: 1 },
+  /** A campfire evening: the gathering sits round the beach campfire. */
+  campfire = false,
 ): void {
   const scheduled = activityAt(schedule[villager.role], time);
   const wanted = rain.raining
     ? rainyActivity(villager.role, scheduled, places.stall !== null)
     : scheduled;
   if (wanted !== villager.activity && !villager.talking && !villager.chat) {
-    switchActivity(villager, wanted, places, tileSizePx);
+    switchActivity(villager, wanted, places, tileSizePx, campfire);
   }
   const errand = villager.errand;
   // Hurrying out of the rain to the door or the awning; a stroll otherwise.

@@ -51,29 +51,34 @@ Change a value, save, and the page updates (`npm run dev`).
 
 ## Life on the island
 
-| Setting                                                     | What it does                                                                                                             |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `villagerDay`                                               | Each villager's day: from which time they bake, sweep, fish, read, soak (hot spring), gather or go home.                 |
-| `social`                                                    | How often villagers chat, wave at you and hum at their chores.                                                           |
-| `social.catchShare`                                         | How often the fisher shows off a caught fish instead of humming.                                                         |
-| `lakeLife`                                                  | How often a fish leaps out of the lake, and how high.                                                                    |
-| `villagers.walkSpeedTilesPerSecond`                         | How fast villagers stroll.                                                                                               |
-| `rainyDay`                                                  | How heavy the rain must be before villagers shelter, and how fast they hurry.                                            |
-| `rabbits`, `ducks`                                          | How many, how fast, and how shy they are.                                                                                |
-| `wildlife.night`                                            | When the animals sleep (rabbits by cover, ducks by the shore).                                                           |
-| `afterRain`                                                 | After a shower: how many puddles (village paths, the kid's field), and how long they take to dry.                        |
-| `ambience.guitar`                                           | How near you must be to hear the guitar at the evening gathering (full / gone, tiles).                                   |
-| `ambience.spring`                                           | How near you must be to hear the hot spring bubbling (full / gone, tiles).                                               |
-| `hotSpring.minGapTiles`, `hotSpring.choices`                | Where the hot spring goes: how far from the village and houses, and how many cosy spots to pick from (re-bake to apply). |
-| `hotSpring.steam*`, `hotSpring.morning`                     | The steam over the hot spring: how many puffs, how they rise, how thick by day, on a cool morning and in the rain.       |
-| `playmates.splashSeconds`                                   | How long the kid splashes in a puddle after rain.                                                                        |
-| `birds.songSeconds`                                         | How long a bird sings (a note balloon) coming out from shelter after rain.                                               |
-| `animals`                                                   | How many chickens and cats, how fast, how far they roam, how jumpy the chickens are.                                     |
-| `butterflies`, `fireflies`                                  | How many, and how they fly or blink.                                                                                     |
-| `birds`                                                     | How many birds and gulls, when they are out, how shy they are and how far they fly.                                      |
-| `playmates`                                                 | When and where (a field outside the village) the kid and puppy play, their pace, the ball, hellos.                       |
-| `player.walkSpeedTilesPerSecond` / `runSpeedTilesPerSecond` | How fast you walk and run.                                                                                               |
-| `tour.idleSeconds`                                          | How long without input before the tour starts.                                                                           |
+| Setting                                                            | What it does                                                                                                                                                           |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villagerDay`                                                      | Each villager's day: from which time they bake, sweep, fish, read, soak (hot spring), gather or go home.                                                               |
+| `social`                                                           | How often villagers chat, wave at you and hum at their chores.                                                                                                         |
+| `social.catchShare`                                                | How often the fisher shows off a caught fish instead of humming.                                                                                                       |
+| `lakeLife`                                                         | How often a fish leaps out of the lake, and how high.                                                                                                                  |
+| `villagers.walkSpeedTilesPerSecond`                                | How fast villagers stroll.                                                                                                                                             |
+| `rainyDay`                                                         | How heavy the rain must be before villagers shelter, and how fast they hurry.                                                                                          |
+| `rabbits`, `ducks`                                                 | How many, how fast, and how shy they are.                                                                                                                              |
+| `wildlife.night`                                                   | When the animals sleep (rabbits by cover, ducks by the shore).                                                                                                         |
+| `afterRain`                                                        | After a shower: how many puddles (village paths, the kid's field), and how long they take to dry.                                                                      |
+| `ambience.guitar`                                                  | How near you must be to hear the guitar at the evening gathering (full / gone, tiles).                                                                                 |
+| `ambience.spring`                                                  | How near you must be to hear the hot spring bubbling (full / gone, tiles).                                                                                             |
+| `ambience.campfire`                                                | How near you must be to hear the campfire crackle while it burns (full / gone, tiles).                                                                                 |
+| `campfire.minGapTiles`, `campfire.maxSeaTiles`, `campfire.choices` | Where the beach campfire goes: how far from the village, houses and hot spring, how close to the sea, how many spots near the village to pick from (re-bake to apply). |
+| `campfire.litTimes`                                                | When the campfire burns (from dusk round to dawn).                                                                                                                     |
+| `campfire.everyDays`                                               | The village gathers round the campfire every this many evenings, the first one too (`0`: never; otherwise round the well).                                             |
+| `campfire.glowOpacity`, `campfire.glowFlicker`, `campfire.spark*`  | The campfire's warm glow on the sand, how it flickers, and its sparks.                                                                                                 |
+| `hotSpring.minGapTiles`, `hotSpring.choices`                       | Where the hot spring goes: how far from the village and houses, and how many cosy spots to pick from (re-bake to apply).                                               |
+| `hotSpring.steam*`, `hotSpring.morning`                            | The steam over the hot spring: how many puffs, how they rise, how thick by day, on a cool morning and in the rain.                                                     |
+| `playmates.splashSeconds`                                          | How long the kid splashes in a puddle after rain.                                                                                                                      |
+| `birds.songSeconds`                                                | How long a bird sings (a note balloon) coming out from shelter after rain.                                                                                             |
+| `animals`                                                          | How many chickens and cats, how fast, how far they roam, how jumpy the chickens are.                                                                                   |
+| `butterflies`, `fireflies`                                         | How many, and how they fly or blink.                                                                                                                                   |
+| `birds`                                                            | How many birds and gulls, when they are out, how shy they are and how far they fly.                                                                                    |
+| `playmates`                                                        | When and where (a field outside the village) the kid and puppy play, their pace, the ball, hellos.                                                                     |
+| `player.walkSpeedTilesPerSecond` / `runSpeedTilesPerSecond`        | How fast you walk and run.                                                                                                                                             |
+| `tour.idleSeconds`                                                 | How long without input before the tour starts.                                                                                                                         |
 
 ## The island's layout
 

@@ -241,6 +241,17 @@ flowchart LR
   ripple rings and blended steam (`mist_steam_*`, one mist material per puff; thickness from
   `render/springSteam.ts`). The night owl soaks there late in the afternoon (`soak` activity).
   Sound: the `spring` layer (lapping bed + bubbles) by distance.
+- **Beach campfire:** `generation/steps/placeCampfire.ts` (after the hot spring: a 4×4 patch
+  with `log_bench`, two `log_stool_*` seats facing the fire and the 2×2 `campfire`, by the sea and
+  touching the beach, nearest the village; the patch turns to sand, with a sandy strip to the beach
+  if needed). Shared placement helpers: `generation/quietSpots.ts`. Seats are `sit` seats with
+  `faces`; `seat.ts` picks the nearest free spot (`sitOn` returns false when all are taken:
+  "Every seat is taken"). `core/systems/campfire.ts`: `campfireLit` (dusk to dawn) and
+  `campfireEvening` (`GameState.day`, counted at midnight, every `everyDays`): the routine sends
+  the gathering and the night owl to `routinePlaces.campfireSeats` instead of the well and the
+  plaza bench. `render/Campfire` draws flames, sparks (untinted), the glow (`glow_campfire`,
+  untinted mist material, faded in with the dark) and day smoke; `render/seatLift.ts` lifts
+  sitters (and the guitar in `EveningMusic`). Sound: the `fire` layer outdoors, near the lit fire.
 - **Calm (D67):** `core/systems/weather.ts` (clear spells, showers with an eased intensity,
   `rainyTint` used by `DayNightLighting`); `render/Rain` (instanced streaks sized to the view,
   lake rings) and `render/CloudShadows`. `core/systems/tour.ts` (stops, `tourPoint`) and

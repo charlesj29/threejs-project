@@ -319,6 +319,26 @@ export interface IslandConfig {
     /** After a stall, run at most this many steps in one frame (no catch-up burst). */
     readonly maxStepsPerFrame: number;
   };
+  /** The beach campfire: where it goes (generation), when it burns, and its glow. */
+  readonly campfire: {
+    /** Generation: at least this many tiles from the village, the houses and the hot spring. */
+    readonly minGapTiles: number;
+    /** Generation: the fire stands on sand at most this many tiles from the sea. */
+    readonly maxSeaTiles: number;
+    /** Generation: picks at random among this many of the spots nearest the village. */
+    readonly choices: number;
+    /** When it burns (island time, 0..1; from dusk round to dawn). */
+    readonly litTimes: readonly [number, number];
+    /** The village gathers round it every this many evenings (the first one too); 0: never. */
+    readonly everyDays: number;
+    /** The warm glow on the sand at its darkest (0..1), and how much it flickers. */
+    readonly glowOpacity: number;
+    readonly glowFlicker: number;
+    /** Sparks rising from the flames at once; how long each one flies, and how high. */
+    readonly sparks: number;
+    readonly sparkSeconds: number;
+    readonly sparkRisePx: number;
+  };
   /** The hot spring: where it goes (generation) and its steam. */
   readonly hotSpring: {
     /** Generation: at least this many tiles from the village, the cottage and the workspace. */
@@ -552,6 +572,8 @@ export interface IslandConfig {
     };
     /** The evening guitar is loudest within `nearTiles` of the player, gone by `farTiles`. */
     readonly guitar: { readonly nearTiles: number; readonly farTiles: number };
+    /** The campfire (while it burns) is loudest within `nearTiles` of it, gone by `farTiles`. */
+    readonly campfire: { readonly nearTiles: number; readonly farTiles: number };
     /** The hot spring is loudest within `nearTiles` of it, gone by `farTiles`. */
     readonly spring: { readonly nearTiles: number; readonly farTiles: number };
     /** Wind chimes and voices are loudest within `nearTiles` of the village, gone by `farTiles`. */
@@ -840,6 +862,18 @@ export const ISLAND_CONFIG: IslandConfig = {
     grassTuftChance: 0.05,
   },
   loop: { stepsPerSecond: 60, maxStepsPerFrame: 5 },
+  campfire: {
+    minGapTiles: 4,
+    maxSeaTiles: 3,
+    choices: 3,
+    litTimes: [0.7, 0.25],
+    everyDays: 2,
+    glowOpacity: 0.45,
+    glowFlicker: 0.08,
+    sparks: 5,
+    sparkSeconds: 1.6,
+    sparkRisePx: 22,
+  },
   hotSpring: {
     minGapTiles: 6,
     choices: 3,
@@ -984,6 +1018,7 @@ export const ISLAND_CONFIG: IslandConfig = {
     },
     guitar: { nearTiles: 3, farTiles: 14 },
     spring: { nearTiles: 2, farTiles: 9 },
+    campfire: { nearTiles: 2, farTiles: 10 },
     village: { nearTiles: 1, farTiles: 14 },
     bellTimes: [0.5, 0.75],
     waves: { nearTiles: 2, farTiles: 16, floor: 0.06 },

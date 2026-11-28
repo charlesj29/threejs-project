@@ -1,9 +1,10 @@
 // Benches: sitting down and standing up again. Anyone can sit (the player,
-// villagers): on the bench tile nearest them, facing out, feet just in front of
+// villagers): on the free bench tile nearest them, facing out (or the way the
+// seat faces: the stools by the campfire face the fire), feet just in front of
 // the bench row (so they're drawn in front of it; the renderer lifts the sitting
 // sprite onto the seat). Where they stood is remembered for standing up.
 // The hot spring works the same way, with seats in the water instead.
-import type { Player } from '../entities/player';
+import type { Direction, Player } from '../entities/player';
 import { OBJECT_REGISTRY } from '../world/objects';
 import type { WorldObject } from '../world/world';
 
@@ -26,56 +27,51 @@ export function isSoakSeat(seat: WorldObject): boolean {
 }
 
 /**
- * Sits down on a bench (or chair), or into the hot spring. `others`: who else
- * might be soaking already, so two never share a seat in the water.
+ * Sits down on a bench (or chair, or log seat), or into the hot spring: on the
+ * free spot nearest where they stand (`others`: who else might be sitting
+ * there already, so two never share a spot). False if every spot is taken.
  */
 export function sitOn(
   body: Player,
   bench: WorldObject,
   tileSizePx: number,
   others: readonly Player[] = [],
-): void {
-  if (isSoakSeat(bench)) {
-    soakIn(body, bench, tileSizePx, others);
-    return;
-  }
-  const { footprint } = OBJECT_REGISTRY[bench.kind];
-  const nearest = Math.floor(body.x / tileSizePx);
-  const tileX = Math.min(bench.x + footprint.width - 1, Math.max(bench.x, nearest));
-  settle(
-    body,
-    (tileX + 0.5) * tileSizePx,
-    (bench.y + footprint.height) * tileSizePx + SEAT_IN_FRONT_PX,
-    false,
-  );
+): boolean {
+  const interaction = OBJECT_REGISTRY[bench.kind].interaction;
+  const faces = interaction && 'sit' in interaction ? (interaction.faces ?? 'down') : 'down';
+  const spots = isSoakSeat(bench) ? soakSpots(bench, tileSizePx) : benchSpots(bench, tileSizePx);
+  const taken = (spot: { x: number; y: number }): boolean =>
+    others.some((o) => o !== body && o.sitting !== null && o.x === spot.x && o.y === spot.y);
+  const byDistance = [...spots].sort((a, b) => Math.abs(a.x - body.x) - Math.abs(b.x - body.x));
+  const spot = byDistance.find((s) => !taken(s));
+  if (!spot) return false;
+  settle(body, spot.x, spot.y, isSoakSeat(bench), faces);
+  return true;
 }
 
-/** Into the hot spring: the free seat nearest where they stand (the nearest one if both are taken). */
-function soakIn(
-  body: Player,
-  spring: WorldObject,
-  tileSizePx: number,
-  others: readonly Player[],
-): void {
+/** One spot per bench tile: feet just in front of the bench row. */
+function benchSpots(bench: WorldObject, tileSizePx: number): { x: number; y: number }[] {
+  const { footprint } = OBJECT_REGISTRY[bench.kind];
+  return Array.from({ length: footprint.width }, (_, i) => ({
+    x: (bench.x + i + 0.5) * tileSizePx,
+    y: (bench.y + footprint.height) * tileSizePx + SEAT_IN_FRONT_PX,
+  }));
+}
+
+/** The hot spring's seats in the water. */
+function soakSpots(spring: WorldObject, tileSizePx: number): { x: number; y: number }[] {
   const left = spring.x * tileSizePx;
   const top = spring.y * tileSizePx;
-  const seats = SOAK_SEATS_PX.map((seat) => ({ x: left + seat.x, y: top + seat.y }));
-  const taken = (seat: { x: number; y: number }): boolean =>
-    others.some(
-      (o) => o !== body && o.sitting?.soaking === true && o.x === seat.x && o.y === seat.y,
-    );
-  const byDistance = [...seats].sort((a, b) => Math.abs(a.x - body.x) - Math.abs(b.x - body.x));
-  const seat = byDistance.find((s) => !taken(s)) ?? byDistance[0];
-  if (seat) settle(body, seat.x, seat.y, true);
+  return SOAK_SEATS_PX.map((seat) => ({ x: left + seat.x, y: top + seat.y }));
 }
 
-function settle(body: Player, x: number, y: number, soaking: boolean): void {
+function settle(body: Player, x: number, y: number, soaking: boolean, facing: Direction): void {
   body.sitting = { standX: body.x, standY: body.y, soaking };
   body.x = x;
   body.y = y;
   body.previousX = body.x;
   body.previousY = body.y;
-  body.facing = 'down';
+  body.facing = facing;
   body.moving = false;
 }
 

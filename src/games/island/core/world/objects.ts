@@ -1,6 +1,7 @@
 // Object registry. Adding an object type = add a kind + a definition here (and
 // a sprite in the atlas); placement steps refer to kinds and categories.
 import type { TilePoint } from '@/shared/engine/grid';
+import type { Direction } from '../entities/player';
 import type { PanelId } from '../content/portfolio';
 import { STUDIO_PANELS, type StudioPiece } from '../content/studio';
 
@@ -47,6 +48,10 @@ export const OBJECT_KINDS = [
   'chicken_coop',
   'hot_spring',
   'stone_lantern',
+  'campfire',
+  'log_bench',
+  'log_stool_right',
+  'log_stool_left',
   'desk_laptop',
   'phone_wall',
   'tech_shelf',
@@ -102,13 +107,13 @@ export interface ObjectDefinition {
 /**
  * What Space does: show a message of one or more pages, open a part of the
  * portfolio in the panel, or sit down (benches; `soak`: step into the hot spring and sit in the
- * water). `pagePerTile`: each tile of the object opens its own page (the phones on the shelf: one
+ * water; `faces`: the way a sitter faces, if not towards the viewer). `pagePerTile`: each tile of the object opens its own page (the phones on the shelf: one
  * project per phone).
  */
 export type Interaction =
   | { readonly pages: readonly string[] }
   | { readonly panel: PanelId; readonly pagePerTile?: boolean }
-  | { readonly sit: true; readonly soak?: true };
+  | { readonly sit: true; readonly soak?: true; readonly faces?: Direction };
 
 const SINGLE_TILE = { width: 1, height: 1 } as const;
 
@@ -282,6 +287,26 @@ export const OBJECT_REGISTRY: Readonly<Record<ObjectKind, ObjectDefinition>> = {
     ...solid('stone_lantern', 'Stone lantern', 'structure', '#a8a49c'),
     litAtNight: true,
     interaction: says('A little stone lantern. Someone lights it every evening.'),
+  },
+  // The beach campfire: a ring of stones round the fire bed (Campfire.tsx adds the flames at dusk).
+  campfire: {
+    ...solid('campfire', 'Campfire', 'structure', '#c8663a', { width: 2, height: 2 }),
+    interaction: says('A ring of stones for the evening fire. Someone lights it at dusk.'),
+  },
+  // Seats round the campfire: a log facing the viewer, and a stool on each side facing the fire.
+  log_bench: {
+    ...solid('log_bench', 'Log seat', 'structure', '#80542c', { width: 2, height: 1 }),
+    interaction: { sit: true },
+  },
+  log_stool_right: {
+    ...solid('log_stool_right', 'Log stool', 'structure', '#80542c'),
+    spriteKey: 'log_stool',
+    interaction: { sit: true, faces: 'right' },
+  },
+  log_stool_left: {
+    ...solid('log_stool_left', 'Log stool', 'structure', '#80542c'),
+    spriteKey: 'log_stool',
+    interaction: { sit: true, faces: 'left' },
   },
   cat_sleeping: {
     ...solid('cat_sleeping', 'Sleeping cat', 'structure', '#e0893a'),

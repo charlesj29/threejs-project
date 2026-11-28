@@ -6,6 +6,7 @@ import { paintBubbleSprites } from './paintBubbles';
 import { paintCatSprites } from './paintCat';
 import { paintChorePropSprites } from './paintChoreProps';
 import { paintCabinSprites } from './paintCabin';
+import { paintCampfireSprites } from './paintCampfire';
 import { paintCliffSprites } from './paintCliff';
 import { paintDeadwoodSprites } from './paintDeadwood';
 import { paintDuckSprites } from './paintDucks';
@@ -73,6 +74,7 @@ export function paintIslandSprites(): SpriteSource[] {
     ...paintPuppySprites(),
     ...paintCoopSprites(),
     ...paintHotSpringSprites(),
+    ...paintCampfireSprites(),
     ...paintMusicSprites(),
     ...paintWaterLightSprites(),
     ...paintCatSprites(),

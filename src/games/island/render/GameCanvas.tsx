@@ -11,6 +11,7 @@ import { useIslandUiStore } from '../state';
 import { FollowCamera } from './FollowCamera';
 import { DayNightLighting } from './DayNightLighting';
 import { GameLoop } from './GameLoop';
+import { Campfire } from './Campfire';
 import { HotSpring } from './HotSpring';
 import { InteractPrompt } from './InteractPrompt';
 import { AnimalSprites } from './AnimalSprites';
@@ -189,6 +190,9 @@ export function GameCanvas({ game }: GameCanvasProps): JSX.Element {
           lighting={lighting}
           sceneTime={sceneTime}
         />
+      )}
+      {mapId === ISLAND_MAP && (
+        <Campfire world={world} atlas={atlas} lighting={lighting} sceneTime={sceneTime} />
       )}
       {mapId === ISLAND_MAP && (
         <Butterflies world={world} atlas={atlas} lighting={lighting} raining={raining} />

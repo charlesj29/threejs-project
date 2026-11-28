@@ -73,14 +73,14 @@ describe('island sprites', () => {
     expect(atlas.variants('tile_grass').length).toBeGreaterThanOrEqual(4);
   });
 
-  it('paints cast shadows and mist semi-transparent and everything else with hard alpha', () => {
+  it('paints cast shadows, mist and glows semi-transparent and everything else with hard alpha', () => {
     for (const source of paintIslandSprites()) {
       const alphas = new Set<number>();
       for (const frame of source.frames) {
         for (let i = 3; i < frame.data.length; i += 4) alphas.add(frame.data[i] ?? 0);
       }
       const partial = [...alphas].filter((a) => a > 0 && a < 255);
-      const soft = source.key.startsWith('shadow_') || source.key.startsWith('mist_');
+      const soft = ['shadow_', 'mist_', 'glow_'].some((prefix) => source.key.startsWith(prefix));
       if (soft) expect(partial.length, source.key).toBeGreaterThan(0);
       else expect(partial, source.key).toEqual([]);
     }
