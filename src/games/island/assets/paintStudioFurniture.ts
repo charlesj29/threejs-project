@@ -45,9 +45,9 @@ function deskLaptop(): PixelCanvas {
   return c;
 }
 
-const PHONE = { width: 7, height: 12 } as const;
+const PHONE = { width: 7, height: 10 } as const;
 /** The screen inside a phone, relative to its top-left. */
-const SCREEN = { x: 1, y: 2, width: 5, height: 8 } as const;
+const SCREEN = { x: 1, y: 2, width: 5, height: 6 } as const;
 /** Where the shelf's top is, and how far apart the phones stand (one per tile). */
 const SHELF_TOP = 25;
 const PHONE_SLOT = 16;
@@ -56,9 +56,9 @@ const PHONE_SLOT = 16;
 function appScreen(c: PixelCanvas, x: number, y: number, brand: Rgba): void {
   const { width, height } = SCREEN;
   fillRect(c, x, y, width, height, PALETTE.paper.base);
-  fillRect(c, x, y, width, 3, brand); // header
-  fillRect(c, x + 1, y + 1, 2, 1, PALETTE.paper.base); // a title in the header
-  for (const top of [y + 4, y + 6]) {
+  fillRect(c, x, y, width, 2, brand); // header
+  fillRect(c, x + 1, y, 2, 1, PALETTE.paper.base); // a title in the header
+  for (const top of [y + 2, y + 3]) {
     fillRect(c, x + 1, top, width - 2, 1, PALETTE.paper.line); // cards
     setPixel(c, x + 1, top, brand);
   }
@@ -70,10 +70,10 @@ function appScreen(c: PixelCanvas, x: number, y: number, brand: Rgba): void {
 function islandScreen(c: PixelCanvas, x: number, y: number): void {
   const { width, height } = SCREEN;
   fillRect(c, x, y, width, height, PALETTE.shallowSea.base);
-  fillRect(c, x + 1, y + 2, width - 2, height - 4, PALETTE.sand.base);
-  fillRect(c, x + 1, y + 3, width - 2, height - 6, PALETTE.grass.base);
-  setPixel(c, x + 2, y + 4, PALETTE.roof.base);
-  setPixel(c, x + 3, y + 5, PALETTE.oak.dark);
+  fillRect(c, x + 1, y + 1, width - 2, height - 2, PALETTE.sand.base);
+  fillRect(c, x + 1, y + 2, width - 2, height - 4, PALETTE.grass.base);
+  setPixel(c, x + 2, y + 2, PALETTE.roof.base);
+  setPixel(c, x + 3, y + 3, PALETTE.oak.dark);
   setPixel(c, x, y, PALETTE.foam.bright);
 }
 

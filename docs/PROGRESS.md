@@ -89,6 +89,12 @@
 
 ## Session log
 
+### 2026-11-28 — Studio phones smaller again (user request)
+
+- The shelf phones are 7×10 now (were 7×12), screen 5×6: the app screens keep the header with a
+  title, a list and the tab bar; the island screen keeps sea, shore, grass, roof and tree.
+- **Verified:** typecheck, lint, tests, build; the shelf sprite preview checked.
+
 ### 2026-11-28 — New CV, smaller phones, fresh screenshot (user request)
 
 - The CV PDF (`public/portfolio/charles-jonathan-cv.pdf`) is replaced with the new one, and the
