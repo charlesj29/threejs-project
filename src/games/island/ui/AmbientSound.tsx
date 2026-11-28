@@ -13,6 +13,7 @@ import {
   villageDistances,
 } from '../core/systems/soundscape';
 import { eveningMusician } from '../core/systems/eveningMusic';
+import { roosterCrowing } from '../core/systems/rooster';
 import { useIslandUiStore } from '../state';
 
 /** How often to check for a new footstep (ms): short, so steps land on the beat of the feet. */
@@ -116,6 +117,18 @@ export function AmbientSound({ game }: { readonly game: GameState }): null {
       );
       last = now;
       if (passed && game.heldTime === null) player.ringBell();
+    }, ISLAND_CONFIG.ambience.sampleMs);
+    return () => window.clearInterval(timer);
+  }, [game, player]);
+
+  // The rooster: a crow each time one of his dawn bursts begins (not while day or night is held).
+  useEffect(() => {
+    let wasCrowing = false;
+    const timer = window.setInterval(() => {
+      const crowing = roosterCrowing(game.timeOfDay, ISLAND_CONFIG.animals);
+      const rooster = game.animals.some((a) => a.kind === 'rooster' && !a.hidden);
+      if (crowing && !wasCrowing && rooster && game.heldTime === null) player.crow();
+      wasCrowing = crowing;
     }, ISLAND_CONFIG.ambience.sampleMs);
     return () => window.clearInterval(timer);
   }, [game, player]);

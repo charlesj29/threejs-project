@@ -17,6 +17,7 @@ import { InteractPrompt } from './InteractPrompt';
 import { AnimalSprites } from './AnimalSprites';
 import { ChimneySmoke } from './ChimneySmoke';
 import { RabbitSprites } from './RabbitSprites';
+import { RoosterCrow } from './RoosterCrow';
 import { DuckSprites } from './DuckSprites';
 import { ChoreProps } from './ChoreProps';
 import { VillagerBubbles } from './VillagerBubbles';
@@ -178,6 +179,7 @@ export function GameCanvas({ game }: GameCanvasProps): JSX.Element {
       )}
       <InteractPrompt state={game} atlas={atlas} />
       {mapId === ISLAND_MAP && <AnimalSprites state={game} atlas={atlas} lighting={lighting} />}
+      {mapId === ISLAND_MAP && <RoosterCrow state={game} atlas={atlas} sceneTime={sceneTime} />}
       {mapId === ISLAND_MAP && <RabbitSprites state={game} atlas={atlas} lighting={lighting} />}
       {mapId === ISLAND_MAP && <DuckSprites state={game} atlas={atlas} lighting={lighting} />}
       {mapId === ISLAND_MAP && <LakeLife state={game} atlas={atlas} lighting={lighting} />}

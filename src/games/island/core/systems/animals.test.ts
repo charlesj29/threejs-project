@@ -3,7 +3,8 @@ import { toIndex } from '@/shared/engine/grid';
 import { ISLAND_CONFIG } from '../config';
 import { createGameState, stepGame } from '../game/gameState';
 import { generateValidWorld } from '../generation/testUtils';
-import { chickenRun } from './animals';
+import { chickenRun, isPoultry } from './animals';
+import { roosterCrowing } from './rooster';
 
 const STEP = 1 / 60;
 const TILE = ISLAND_CONFIG.map.tileSizePx;
@@ -26,12 +27,15 @@ describe('village animals', () => {
 
   const state = simulate(40);
 
-  it('are three chickens and a cat', () => {
+  it('are three hens, a rooster, two chicks and a cat', () => {
     expect(state.animals.map((a) => a.kind).sort()).toEqual([
       'cat',
+      'chick',
+      'chick',
       'chicken',
       'chicken',
       'chicken',
+      'rooster',
     ]);
   });
 
@@ -40,7 +44,7 @@ describe('village animals', () => {
     expect(run.size).toBeGreaterThan(0);
     for (const animal of state.animals) {
       const tile = tileOf(state, animal);
-      if (animal.kind === 'chicken') expect(run.has(tile)).toBe(true);
+      if (isPoultry(animal.kind)) expect(run.has(tile), animal.kind).toBe(true);
       else expect(state.villageHome.has(tile)).toBe(true);
       expect(state.world.blocked[tile]).toBe(0);
     }
@@ -57,10 +61,52 @@ describe('village animals', () => {
     expect(moved).toBe(true);
   });
 
+  it('the chicks keep close to their mother', () => {
+    const later = simulate(70);
+    const chicks = later.animals.filter((a) => a.kind === 'chick');
+    expect(chicks).toHaveLength(2);
+    for (const chick of chicks) {
+      const mother = later.animals.find((a) => a.id === chick.follows);
+      if (!mother) throw new Error('no mother');
+      expect(mother.kind).toBe('chicken');
+      expect(Math.hypot(chick.x - mother.x, chick.y - mother.y)).toBeLessThan(2.5 * TILE);
+    }
+  });
+
+  it('the hens visit the trough and the dish, and turn to face them', () => {
+    const busyConfig = {
+      ...ISLAND_CONFIG,
+      animals: { ...ISLAND_CONFIG.animals, choreChance: 1 },
+    };
+    const busy = createGameState(generateValidWorld(46), busyConfig);
+    Object.assign(busy, { timeOfDay: 0.4 });
+    const hen = busy.animals.find((a) => a.kind === 'chicken');
+    if (!hen) throw new Error('no hen');
+    expect(hen.chores.length).toBe(2);
+    let atChore = false;
+    for (let i = 0; i < 40 / STEP && !atChore; i++) {
+      stepGame(busy, STEP, busyConfig);
+      atChore = hen.chores.some(
+        (c) => !hen.target && Math.hypot(c.x - hen.x, c.y - hen.y) < 1 && hen.facing === c.facing,
+      );
+    }
+    expect(atChore).toBe(true);
+  });
+
+  it('the rooster stands still to crow at dawn', () => {
+    const [from] = ISLAND_CONFIG.animals.crowTimes[0] ?? [0.215];
+    expect(roosterCrowing(from, ISLAND_CONFIG.animals)).toBe(true);
+    expect(roosterCrowing(0.5, ISLAND_CONFIG.animals)).toBe(false);
+    const dawn = simulate(2, from);
+    const rooster = dawn.animals.find((a) => a.kind === 'rooster');
+    if (!rooster) throw new Error('no rooster');
+    expect(rooster.target).toBeNull();
+  });
+
   it('at night the chickens go into the hen house and the cat sleeps on its doorstep', () => {
     const night = simulate(60, 0.9);
     for (const animal of night.animals) {
-      if (animal.kind === 'chicken') expect(animal.hidden).toBe(true);
+      if (isPoultry(animal.kind)) expect(animal.hidden, animal.kind).toBe(true);
       else expect(animal.pose).toBe('sleep');
     }
   });

@@ -19,6 +19,7 @@ import { startTicker, type Ticker } from './ticker';
 import {
   bell,
   chimes,
+  crow,
   footstep,
   strum,
   syllable,
@@ -39,7 +40,9 @@ export type AmbienceLayer =
   /** A little guitar played at the evening gathering. */
   | 'guitar'
   /** The hot spring: soft lapping and bubbles. */
-  | 'spring';
+  | 'spring'
+  /** The rooster's dawn crow (how near the hen house you are). */
+  | 'rooster';
 /** 0..1 per layer. */
 export type AmbienceLevels = Readonly<Record<AmbienceLayer, number>>;
 
@@ -55,6 +58,7 @@ export const AMBIENCE_LAYERS: readonly AmbienceLayer[] = [
   'bell',
   'guitar',
   'spring',
+  'rooster',
 ];
 
 export interface AmbiencePlayerOptions {
@@ -74,6 +78,8 @@ export interface AmbiencePlayer {
   footstep: (ground: FootstepGround) => void;
   /** The distant village bell (three strikes). */
   ringBell: () => void;
+  /** The rooster crows once (heard as loud as the `rooster` layer allows). */
+  crow: () => void;
   dispose: () => void;
 }
 
@@ -132,6 +138,7 @@ function buildGraph(context: AudioContext): Graph {
     bell: layer(),
     guitar: layer(),
     spring: layer(),
+    rooster: layer(),
   };
   const noise = noiseBuffer(context, 11);
   surf(context, noise, layers.waves);
@@ -158,6 +165,7 @@ export function createAmbiencePlayer(options: AmbiencePlayerOptions): AmbiencePl
     bell: 0,
     guitar: 0,
     spring: 0,
+    rooster: 0,
   };
   const rng = createRng(RNG_SEED);
   const next = {
@@ -287,6 +295,10 @@ export function createAmbiencePlayer(options: AmbiencePlayerOptions): AmbiencePl
     ringBell: () => {
       if (!graph || graph.context.state !== 'running' || levels.bell < AUDIBLE) return;
       bell(graph.context, graph.layers.bell, graph.context.currentTime + 0.05);
+    },
+    crow: () => {
+      if (!graph || graph.context.state !== 'running' || levels.rooster < AUDIBLE) return;
+      crow(graph.context, graph.layers.rooster, graph.context.currentTime + 0.05);
     },
     dispose: () => {
       ticker?.stop();

@@ -26,8 +26,11 @@ export function objectSpriteKey(
   atlas: VariantLookup,
 ): string {
   if (object.kind === 'fence') {
-    const isFence = (dx: number, dy: number): boolean =>
-      kindAt(world, object.x + dx, object.y + dy) === 'fence';
+    // A gate counts as fence, so the rails run up to it.
+    const isFence = (dx: number, dy: number): boolean => {
+      const kind = kindAt(world, object.x + dx, object.y + dy);
+      return kind === 'fence' || kind === 'fence_gate';
+    };
     return fenceSpriteKey(isFence(0, -1), isFence(1, 0), isFence(0, 1), isFence(-1, 0));
   }
   const base = OBJECT_REGISTRY[object.kind].spriteKey;

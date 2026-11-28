@@ -28,6 +28,7 @@ import { paintObjectSprites } from './paintObjects';
 import { paintPlayerSprites } from './paintPlayer';
 import { paintPlazaSprites } from './paintPlaza';
 import { paintRabbitSprites } from './paintRabbits';
+import { paintRunPropSprites } from './paintRunProps';
 import { paintPropSprites } from './paintProps';
 import { paintShadowSprites } from './paintShadows';
 import { paintSmokeSprites } from './paintSmoke';
@@ -73,6 +74,7 @@ export function paintIslandSprites(): SpriteSource[] {
     ...paintPlaymateSprites(),
     ...paintPuppySprites(),
     ...paintCoopSprites(),
+    ...paintRunPropSprites(),
     ...paintHotSpringSprites(),
     ...paintCampfireSprites(),
     ...paintMusicSprites(),

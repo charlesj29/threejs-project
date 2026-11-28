@@ -55,3 +55,25 @@ export function reachedFromCabin(context: GenerationContext): Uint8Array {
     ? floodFill(size, [toIndex(size, door.x, door.y)], (i) => blocked[i] === 0)
     : new Uint8Array(terrain.length);
 }
+
+/**
+ * True if closing off `closed` (a new fence, say) leaves every tile that could
+ * be walked to from the cottage (`reached`, from `reachedFromCabin`) still
+ * reachable, apart from the closed tiles themselves.
+ */
+export function staysConnected(
+  context: GenerationContext,
+  reached: Uint8Array,
+  closed: ReadonlySet<number>,
+): boolean {
+  const { size, terrain, objects } = context;
+  const blocked = computeBlockedMask(size, terrain, objects);
+  const door = context.cabin ? getDoorFrontTile(context.cabin) : null;
+  if (!door) return false;
+  const after = floodFill(
+    size,
+    [toIndex(size, door.x, door.y)],
+    (i) => blocked[i] === 0 && !closed.has(i),
+  );
+  return reached.every((was, i) => was !== 1 || closed.has(i) || after[i] === 1);
+}

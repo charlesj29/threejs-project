@@ -137,7 +137,16 @@ export interface IslandConfig {
     /** false = no animals in the village (the code and art stay, ready to switch back on). */
     readonly enabled: boolean;
     readonly chickens: number;
+    /** In the chicken run too: a rooster, and chicks that follow the first hen about. */
+    readonly roosters: number;
+    readonly chicks: number;
+    /** The chicks go into the hen house this much earlier than the others (fraction of a day). */
+    readonly chicksToBedEarly: number;
     readonly cats: number;
+    /** How often a hen (or the rooster) picks the feed trough or the water dish instead of a random spot (0..1). */
+    readonly choreChance: number;
+    /** When the rooster crows (island time, 0..1): a few short bursts at dawn, once the run is up (after `wildlife.night`). */
+    readonly crowTimes: readonly (readonly [number, number])[];
     readonly chickenSpeedTilesPerSecond: number;
     readonly catSpeedTilesPerSecond: number;
     /** How far (tiles) an animal wanders from where it stands. */
@@ -569,9 +578,12 @@ export interface IslandConfig {
       readonly bell: number;
       readonly guitar: number;
       readonly spring: number;
+      readonly rooster: number;
     };
     /** The evening guitar is loudest within `nearTiles` of the player, gone by `farTiles`. */
     readonly guitar: { readonly nearTiles: number; readonly farTiles: number };
+    /** The rooster's crow is loudest within `nearTiles` of the hen house, gone by `farTiles`. */
+    readonly rooster: { readonly nearTiles: number; readonly farTiles: number };
     /** The campfire (while it burns) is loudest within `nearTiles` of it, gone by `farTiles`. */
     readonly campfire: { readonly nearTiles: number; readonly farTiles: number };
     /** The hot spring is loudest within `nearTiles` of it, gone by `farTiles`. */
@@ -756,7 +768,16 @@ export const ISLAND_CONFIG: IslandConfig = {
   animals: {
     enabled: true,
     chickens: 3,
+    roosters: 1,
+    chicks: 2,
+    chicksToBedEarly: 0.012,
     cats: 1,
+    choreChance: 0.35,
+    crowTimes: [
+      [0.245, 0.252],
+      [0.262, 0.268],
+      [0.282, 0.287],
+    ],
     chickenSpeedTilesPerSecond: 1.6,
     catSpeedTilesPerSecond: 0.9,
     wanderRadiusTiles: 3,
@@ -1015,10 +1036,12 @@ export const ISLAND_CONFIG: IslandConfig = {
       bell: 0.28,
       guitar: 0.3,
       spring: 0.3,
+      rooster: 0.3,
     },
     guitar: { nearTiles: 3, farTiles: 14 },
     spring: { nearTiles: 2, farTiles: 9 },
     campfire: { nearTiles: 2, farTiles: 10 },
+    rooster: { nearTiles: 4, farTiles: 30 },
     village: { nearTiles: 1, farTiles: 14 },
     bellTimes: [0.5, 0.75],
     waves: { nearTiles: 2, farTiles: 16, floor: 0.06 },

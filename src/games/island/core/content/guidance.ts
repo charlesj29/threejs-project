@@ -70,6 +70,15 @@ export const VILLAGER_TALKS: readonly (readonly (readonly string[])[])[] = [
   ],
 ];
 
+/** Looking in at the hen house, by the part of the day. */
+export const HEN_HOUSE_LINES: Readonly<Record<string, string>> = {
+  dawn: 'The rooster is up before everyone. There is a warm egg in the straw already.',
+  morning: 'Two fresh eggs in the straw this morning!',
+  afternoon: 'The hens are busy pecking about. The eggs were collected this morning.',
+  evening: 'The hens are settling in for the night.',
+  night: 'Shh... the hens are fast asleep inside.',
+};
+
 /** Sitting down where every seat is taken. */
 export const SEATS_TAKEN = 'Every seat is taken just now.';
 

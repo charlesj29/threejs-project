@@ -27,6 +27,8 @@ export interface SoundscapeLevels {
   readonly guitar: number;
   /** The hot spring, louder as you get near it. */
   readonly spring: number;
+  /** The rooster's crow comes through this loud here (by the hen house, or far off). */
+  readonly rooster: number;
 }
 
 /** Steps (8-way) from every tile to the sea, and to the village. */
@@ -121,6 +123,19 @@ function campfireLevel(
   return fadeByTiles(Math.hypot(dx, dy) / tileSizePx, settings.campfire);
 }
 
+/** The rooster's crow, by how far the listener is from the hen house. */
+function henHouseLevel(
+  listener: Listener,
+  settings: IslandConfig['ambience'],
+  tileSizePx: number,
+): number {
+  const coop = listener.world.objects.find((object) => object.kind === 'chicken_coop');
+  if (!coop) return 0;
+  const dx = (coop.x + 1) * tileSizePx - listener.x;
+  const dy = (coop.y + 1) * tileSizePx - listener.y;
+  return fadeByTiles(Math.hypot(dx, dy) / tileSizePx, settings.rooster);
+}
+
 /** The hot spring, by how far the listener is from the middle of the pool. */
 function springLevel(
   listener: Listener,
@@ -166,6 +181,7 @@ export function soundscapeLevels(
       bell: damp,
       guitar: 0,
       spring: 0,
+      rooster: 0,
     };
   }
   const tx = Math.floor(listener.x / tileSizePx);
@@ -194,5 +210,6 @@ export function soundscapeLevels(
         )
       : 0,
     spring: springLevel(listener, settings, tileSizePx),
+    rooster: henHouseLevel(listener, settings, tileSizePx),
   };
 }

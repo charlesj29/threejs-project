@@ -171,3 +171,29 @@ export function strum(
   }
   return t + rng.range(0.15, 0.3);
 }
+
+/** The rooster's "cock-a-doodle-doo": three short calls, then a long one that rises and falls. */
+const CROW_NOTES: readonly (readonly [start: number, peak: number, seconds: number])[] = [
+  [520, 640, 0.11],
+  [600, 700, 0.1],
+  [640, 760, 0.12],
+  [700, 980, 0.55],
+];
+
+/** A soft, slightly far-off crow (a reedy tone through a gentle filter). */
+export function crow(context: BaseAudioContext, out: AudioNode, time: number): void {
+  const soft = filter(context, 'bandpass', 1300, 0.9);
+  soft.connect(out);
+  let at = time;
+  for (const [start, peak, seconds] of CROW_NOTES) {
+    const osc = context.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(start, at);
+    osc.frequency.linearRampToValueAtTime(peak, at + seconds * 0.35);
+    osc.frequency.linearRampToValueAtTime(start * 0.92, at + seconds);
+    osc.connect(envelope(context, at, 0.22, 0.015, seconds)).connect(soft);
+    osc.start(at);
+    osc.stop(at + seconds + 0.05);
+    at += seconds + 0.04;
+  }
+}

@@ -1,5 +1,7 @@
-// Village animals: a few chickens in their fenced run with the hen house, and
-// a cat that pads round the village. They pick a nearby open tile, walk
+// Village animals: a few hens, a rooster and two chicks in their fenced run
+// with the hen house, and a cat that pads round the village. The chicks keep
+// close behind their mother; the hens go to the feed trough and the water dish
+// now and then; the rooster stops to crow at dawn. They pick a nearby open tile, walk
 // straight to it, rest (pecking, sitting, napping), and pick again, keeping to
 // their own ground and never walking through anybody. Chickens scurry about
 // their run when someone comes close. In the rain the chickens huddle by the
@@ -17,7 +19,19 @@ import { OBJECT_REGISTRY } from '../world/objects';
 import { isWalkableTile } from '../world/tiles';
 import { SMALL_BODY, type Spot } from './bodies';
 
-export type AnimalKind = 'chicken' | 'cat';
+export type AnimalKind = 'chicken' | 'rooster' | 'chick' | 'cat';
+
+/** The birds of the chicken run (they share its ways: the run, the hen house, scurrying off). */
+export function isPoultry(kind: AnimalKind): boolean {
+  return kind !== 'cat';
+}
+
+/** Somewhere to stand by the trough or the dish, facing it. */
+export interface Chore {
+  readonly x: number;
+  readonly y: number;
+  readonly facing: 'left' | 'right';
+}
 /** Out and about, sheltering from the rain, or asleep (as the other animals: see `wildlifeRest`). */
 export type AnimalRest = 'free' | 'shelter' | 'sleep';
 
@@ -56,6 +70,13 @@ export interface Animal {
   /** The way home to shelter or the hen house (tiles still to walk through), and where it leads. */
   route: number[];
   routeGoal: number;
+  /** A chick's mother (an animal id), or null, and where it keeps beside her (map pixels). */
+  readonly follows: number | null;
+  readonly followOffset: { readonly x: number; readonly y: number };
+  /** Places it goes now and then for food or water (hens and the rooster). */
+  readonly chores: readonly Chore[];
+  /** On the way to a chore: the way to face on arrival. */
+  choreFacing: 'left' | 'right' | null;
 }
 
 type AnimalSettings = IslandConfig['animals'];
@@ -67,6 +88,12 @@ const FLEE_TRIES = 10;
 const GO_ROUND_SECONDS = 1;
 /** Shelter spots are this close to a door (tiles). */
 const SHELTER_REACH_TILES = 3;
+/** A chick keeps this close to its mother (map pixels), a little behind and to one side. */
+const FOLLOW_PX = 6;
+const CHICK_OFFSETS: readonly { readonly x: number; readonly y: number }[] = [
+  { x: -11, y: 6 },
+  { x: 11, y: 7 },
+];
 
 function speedOf(animal: Animal, settings: AnimalSettings): number {
   const base =
@@ -151,17 +178,30 @@ export function createAnimals(
       : byDoor(bakeryDoor);
   const otherDoor = [...doors].find((d) => d !== bakeryDoor) ?? null;
   const doorstep = otherDoor === null ? [] : byDoor(otherDoor);
+  // The rooster and the chicks only live in a run.
   const kinds: AnimalKind[] = [
     ...Array.from({ length: settings.chickens }, (): AnimalKind => 'chicken'),
+    ...Array.from({ length: run ? settings.roosters : 0 }, (): AnimalKind => 'rooster'),
+    ...Array.from({ length: run ? settings.chicks : 0 }, (): AnimalKind => 'chick'),
     ...Array.from({ length: settings.cats }, (): AnimalKind => 'cat'),
   ];
+  const birds = kinds.filter(isPoultry).length;
+  const mother = kinds.indexOf('chicken');
+  const chores = run ? choresIn(world, new Set(run.tiles), tileSizePx) : [];
   let chickens = 0;
   let cats = 0;
+  let chicks = 0;
+  const started = new Set<number>();
   return kinds.map((kind, id) => {
-    const chicken = kind === 'chicken';
-    const tile = rng.pick(chicken && run && run.tiles.length > 0 ? run.tiles : open);
-    const spots = kind === 'chicken' ? coop : doorstep;
-    const nth = kind === 'chicken' ? chickens++ : cats++;
+    const chicken = isPoultry(kind);
+    // Each starts on a tile of its own (as long as there are enough).
+    const ground = chicken && run && run.tiles.length > 0 ? run.tiles : open;
+    const free = ground.filter((t) => !started.has(t));
+    const tile = rng.pick(free.length > 0 ? free : ground);
+    started.add(tile);
+    const spots = chicken ? coop : doorstep;
+    const nth = chicken ? chickens++ : cats++;
+    const chickIndex = kind === 'chick' ? chicks++ : -1;
     const shelterTile = spots[nth] ?? tile;
     const { x, y } = centre(world, tile, tileSizePx);
     return {
@@ -178,15 +218,42 @@ export function createAnimals(
       fleeing: false,
       pose: 'idle',
       shelter: centre(world, shelterTile, tileSizePx),
-      shelters: new Set(chicken && run ? coop.slice(0, settings.chickens + 2) : [shelterTile]),
+      shelters: new Set(chicken && run ? coop.slice(0, birds + 2) : [shelterTile]),
       waited: 0,
       home: chicken ? runSet : villageSet,
       den: chicken && run ? centre(world, run.door, tileSizePx) : null,
       hidden: false,
       route: [],
       routeGoal: -1,
+      follows: chickIndex >= 0 && mother >= 0 ? mother : null,
+      followOffset: chickOffset(Math.max(0, chickIndex)),
+      chores: kind === 'chicken' || kind === 'rooster' ? chores : [],
+      choreFacing: null,
     };
   });
+}
+
+/** Where the nth chick keeps beside its mother: each on its own side, a little behind. */
+function chickOffset(chickIndex: number): { readonly x: number; readonly y: number } {
+  return CHICK_OFFSETS[chickIndex % CHICK_OFFSETS.length] ?? { x: 0, y: 6 };
+}
+
+/** Beside the feed trough and the water dish (on the run's open ground), facing them. */
+function choresIn(world: World, run: ReadonlySet<number>, tile: number): Chore[] {
+  const chores: Chore[] = [];
+  for (const object of world.objects) {
+    if (object.kind !== 'feed_trough' && object.kind !== 'water_dish') continue;
+    for (const [dx, facing] of [
+      [-1, 'right'],
+      [1, 'left'],
+    ] as const) {
+      const x = object.x + dx;
+      if (x < 0 || x >= world.width || !run.has(toIndex(world, x, object.y))) continue;
+      chores.push({ x: (x + 0.5) * tile, y: (object.y + 0.5) * tile, facing });
+      break;
+    }
+  }
+  return chores;
 }
 
 /** An open village tile nobody stands on. */
@@ -200,6 +267,27 @@ function isOpen(
   if (x < 0 || y < 0 || x >= world.width || y >= world.height) return false;
   const i = toIndex(world, x, y);
   return home.has(i) && world.blocked[i] === 0 && !occupied.has(i);
+}
+
+/**
+ * Where to wait out the rain: its own sheltered spot, or (if someone has
+ * already settled there) the nearest other free one, so nobody walks into a
+ * friend huddled on its spot.
+ */
+function shelterGoal(
+  animal: Animal,
+  world: World,
+  here: number,
+  occupied: ReadonlySet<number>,
+  tileSizePx: number,
+): { x: number; y: number } {
+  const own = indexOf(world, animal.shelter.x, animal.shelter.y, tileSizePx);
+  if (own === here || !occupied.has(own)) return animal.shelter;
+  const free = [...animal.shelters]
+    .filter((t) => t === here || !occupied.has(t))
+    .sort((a, b) => gap(world, a, here) - gap(world, b, here));
+  const tile = free[0];
+  return tile === undefined ? animal.shelter : centre(world, tile, tileSizePx);
 }
 
 /** A random open village tile within the wander radius, or null. */
@@ -282,6 +370,10 @@ export function updateAnimal(
   scarers: readonly Spot[] = [],
   occupied: ReadonlySet<number> = new Set(),
   nearby: readonly Spot[] = [],
+  /** A chick's mother: it keeps close behind her. */
+  leader: Spot | null = null,
+  /** The rooster's dawn crow is on: he stands still for it. */
+  crowing = false,
 ): void {
   animal.previousX = animal.x;
   animal.previousY = animal.y;
@@ -292,7 +384,13 @@ export function updateAnimal(
     animal.pose = 'idle';
   }
   if (animal.hidden) return;
-  if (animal.kind === 'chicken' && !animal.fleeing) {
+  // The rooster stands still to crow (at dawn, out and about).
+  if (crowing && rest === 'free' && !animal.fleeing) {
+    animal.target = null;
+    animal.pose = 'idle';
+    return;
+  }
+  if (isPoultry(animal.kind) && !animal.fleeing) {
     const reach = settings.fleeRadiusTiles * tileSizePx;
     const scarer = scarers.find((s) => Math.hypot(s.x - animal.x, s.y - animal.y) < reach);
     const away = scarer
@@ -311,8 +409,11 @@ export function updateAnimal(
       return;
     }
     // Night: chickens go into the hen house; otherwise to the sheltered spot.
-    const goal = rest === 'sleep' && animal.den ? animal.den : animal.shelter;
     const here = indexOf(world, animal.x, animal.y, tileSizePx);
+    const goal =
+      rest === 'sleep' && animal.den
+        ? animal.den
+        : shelterGoal(animal, world, here, occupied, tileSizePx);
     const spot = indexOf(world, goal.x, goal.y, tileSizePx);
     // Settled: in the hen house for the night, or on any free sheltered spot in the rain (so two
     // chickens never wait for ever to swap places).
@@ -336,15 +437,37 @@ export function updateAnimal(
   } else if (rest === 'free') {
     animal.pose = 'idle';
   }
+  // A chick out and about trots after its mother (and pecks about when it's close).
+  if (leader && rest === 'free' && !animal.fleeing) {
+    const wanted = { x: leader.x + animal.followOffset.x, y: leader.y + animal.followOffset.y };
+    const inRun = home.has(indexOf(world, wanted.x, wanted.y, tileSizePx));
+    const goal = inRun ? wanted : { x: leader.x, y: leader.y };
+    if (Math.hypot(goal.x - animal.x, goal.y - animal.y) > FOLLOW_PX) animal.target = goal;
+    else {
+      animal.target = null;
+      animal.restedFor += stepSeconds;
+      return;
+    }
+  }
   const target = animal.target;
   if (!target) {
     animal.restTime -= stepSeconds;
     animal.restedFor += stepSeconds;
     if (animal.restTime > 0) return;
-    const tile = pickTarget(animal, world, home, occupied, rng, settings, tileSizePx);
     animal.restTime = rng.range(settings.minRestSeconds, settings.maxRestSeconds);
+    // Now and then a hen (or the rooster) goes for food or a drink.
+    const chore =
+      animal.chores.length > 0 && rng.chance(settings.choreChance) ? rng.pick(animal.chores) : null;
+    if (chore && !occupied.has(indexOf(world, chore.x, chore.y, tileSizePx))) {
+      animal.target = { x: chore.x, y: chore.y };
+      animal.choreFacing = chore.facing;
+      animal.restedFor = 0;
+      return;
+    }
+    const tile = pickTarget(animal, world, home, occupied, rng, settings, tileSizePx);
     if (!tile) return;
     animal.target = { x: (tile.x + 0.5) * tileSizePx, y: (tile.y + 0.5) * tileSizePx };
+    animal.choreFacing = null;
     animal.restedFor = 0;
     return;
   }
@@ -354,6 +477,9 @@ export function updateAnimal(
   if (distance <= ARRIVE_PX) {
     animal.target = null;
     animal.fleeing = false;
+    // At the trough or the dish: turn to it.
+    if (animal.choreFacing) animal.facing = animal.choreFacing;
+    animal.choreFacing = null;
     return;
   }
   const step = Math.min(distance, speedOf(animal, settings) * tileSizePx * stepSeconds);

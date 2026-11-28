@@ -33,7 +33,8 @@ export type ValidationIssueCode =
   | 'village-missing'
   | 'studio-missing'
   | 'hot-spring-missing'
-  | 'campfire-missing';
+  | 'campfire-missing'
+  | 'chicken-coop-missing';
 
 export interface ValidationIssue {
   readonly code: ValidationIssueCode;
@@ -234,5 +235,11 @@ export function validateMap(map: MapSnapshot, rules: ValidationRules): Validatio
 }
 
 export function validateGeneration(context: GenerationContext): ValidationIssue[] {
-  return validateMap(context, context.config.validation);
+  const issues = validateMap(context, context.config.validation);
+  // The chicken run, when it is switched on, is on every island too.
+  const coop = context.objects.some((object) => object.kind === 'chicken_coop');
+  if (context.config.village.chickenCoop && context.village && !coop) {
+    issues.push(issue('chicken-coop-missing', 'No room for the chicken run'));
+  }
+  return issues;
 }

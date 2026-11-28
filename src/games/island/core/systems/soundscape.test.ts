@@ -91,6 +91,15 @@ describe('soundscape', () => {
     expect(near.waves).toBeLessThan(settings.waves.floor);
   });
 
+  it('carries the crow of the rooster from the hen house, softer further off', () => {
+    const coop = island.objects.find((o) => o.kind === 'chicken_coop');
+    if (!coop) throw new Error('no hen house');
+    const by = { world: island, x: (coop.x + 1) * TILE, y: (coop.y + 3) * TILE };
+    const far = { ...by, y: by.y + (settings.rooster.farTiles + 1) * TILE };
+    expect(soundscapeLevels(by, 0, 0, sea, settings, TILE).rooster).toBe(1);
+    expect(soundscapeLevels(far, 0, 0, sea, settings, TILE).rooster).toBe(0);
+  });
+
   it('crackles by the campfire while it burns, and not by day', () => {
     const fire = island.objects.find((o) => o.kind === 'campfire');
     if (!fire) throw new Error('no campfire');

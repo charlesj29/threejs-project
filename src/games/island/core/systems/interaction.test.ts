@@ -5,6 +5,8 @@ import { createPlayer, type Direction } from '../entities/player';
 import { createGameState, stepGame } from '../game/gameState';
 import { ISLAND_KEY_BINDINGS } from './controls';
 import { createVillager } from '../entities/villager';
+import { HEN_HOUSE_LINES } from '../content/guidance';
+import { dayPhase } from './dayNight';
 import { findInteractTarget } from './interaction';
 import { areaTiles, makeTestWorld, TEST_TILE } from './testWorld';
 
@@ -96,5 +98,22 @@ describe('interaction', () => {
     );
     expect(target?.kind).toBe('villager');
     expect(target?.pages).toEqual(['Hi!']);
+  });
+});
+
+describe('the hen house', () => {
+  it('says what the hens are up to at this time of day', () => {
+    const coopWorld = makeTestWorld(
+      Array.from({ length: 6 }, () => ',,,,,,'),
+      [{ kind: 'chicken_coop', x: 2, y: 1 }],
+    );
+    for (const time of [0.4, 0.95]) {
+      const state = createGameState(coopWorld, ISLAND_CONFIG);
+      state.timeOfDay = time;
+      Object.assign(state.player, playerAt(2, 3, 'up'));
+      stepGame(state, STEP, ISLAND_CONFIG);
+      tapSpace(state);
+      expect(state.dialog?.pages).toEqual([HEN_HOUSE_LINES[dayPhase(time)]]);
+    }
   });
 });

@@ -80,6 +80,8 @@ export interface InteractionSettings extends HitboxSize {
   readonly villagerPages: (villager: Villager) => readonly string[];
   /** What a signpost says (it points to this island's landmarks). */
   readonly signPages: (sign: WorldObject) => readonly string[];
+  /** What a thing says right now, if it changes through the day (the hen house); null: as usual. */
+  readonly livePages?: (object: WorldObject) => readonly string[] | null;
 }
 
 /** The villager or interactive object in front of the player, if any. */
@@ -105,6 +107,8 @@ export function findInteractTarget(
   // A building answers only at its door, not when you face one of its walls.
   const atDoor = !door || (tileX === object.x + door.x && tileY === object.y + door.y);
   if (!interaction || !atDoor) return null;
+  const live = settings.livePages?.(object);
+  if (live) return { kind: 'object', object, pages: live };
   if ('sit' in interaction) return { kind: 'object', object, pages: [], sit: true };
   if ('panel' in interaction) {
     const page = interaction.pagePerTile ? tileX - object.x : 0;

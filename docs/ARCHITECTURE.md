@@ -241,6 +241,16 @@ flowchart LR
   ripple rings and blended steam (`mist_steam_*`, one mist material per puff; thickness from
   `render/springSteam.ts`). The night owl soaks there late in the afternoon (`soak` activity).
   Sound: the `spring` layer (lapping bed + bubbles) by distance.
+- **Chicken run:** `generation/steps/buildChickenCoop.ts` places the fenced pen (with a
+  `fence_gate`), the hen house, a `feed_trough`, a `water_dish`, a `straw_patch` and `sunflower`s
+  outside the fence; if no spot fits it tries closer to the village, then sand, then without the
+  walkway (gate reachable and `quietSpots.staysConnected`), and `validateGeneration` requires it.
+  `core/systems/animals.ts`: hens, a rooster and chicks (`isPoultry`); chicks keep
+  `followOffset` from their mother (`follows`); hens and the rooster take `chores` (beside the
+  trough and dish, `choreChance`) and face them; a bird whose rain spot is taken picks another
+  free one, and settled birds are always gone round. `core/systems/rooster.ts`: `crowTimes`;
+  `render/RoosterCrow` floats notes, `ui/AmbientSound` plays `crow` (layer `rooster`, by distance
+  to the hen house). The hen house says what the hens are up to (`livePages`, `HEN_HOUSE_LINES`).
 - **Beach campfire:** `generation/steps/placeCampfire.ts` (after the hot spring: a 4×4 patch
   with `log_bench`, two `log_stool_*` seats facing the fire and the 2×2 `campfire`, by the sea and
   touching the beach, nearest the village; the patch turns to sand, with a sandy strip to the beach

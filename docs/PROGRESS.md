@@ -93,10 +93,31 @@
 
 ## Session log
 
+### 2026-11-28 — A livelier chicken run, on every island (user request)
+
+- Every island now has the chicken run: if no spot fits just outside the village, it tries closer
+  in, then on sand, then (last) without the clear walkway all round, as long as the gate can be
+  reached and the run cuts nobody off. Validation requires it. Checked on 122 seeds: none of them
+  changes because of it (the default island 4178021422 keeps its layout and gains its run).
+- The run: a gate in the front fence, a feed trough and a water dish, a straw patch, sunflowers
+  along the outside of the fence; the hen house has a nesting box with eggs and a rooster
+  weathervane on the ridge. The hen house says what the hens are up to by the time of day.
+- The birds: three hens, a russet rooster and two chicks (all with side, front and back views).
+  The chicks trot after their mother; the hens and the rooster go to the trough and the dish and
+  peck there; the rooster stops to crow at dawn (notes float up, and you hear a soft crow near
+  the hen house). The chicks go to bed a little earlier.
+- Fixed on the way: birds started on the same tile; a bird walking home in the rain could walk
+  into one already huddled on its spot (now it picks another free spot, and settled birds are
+  always gone round).
+- **Verified:** typecheck, lint, tests (run layout and gate, required by validation; six birds
+  in the run; chicks near their mother; hens at the trough facing it; the rooster still while
+  crowing; the hen house's words by time of day; the crow's sound by distance; nobody walks
+  through anybody), build; browser: the run at dawn with the rooster crowing.
+
 ### 2026-11-28 — Default seed 4178021422 (user request)
 
 - The default island is now seed 4178021422 (`generation.authoringSeed`), re-baked. It has no
-  chicken run yet (no room for one near the bakery on this island); that comes with the coop update.
+  chicken run yet (no room for one near the bakery on this island); the coop update below adds it.
   The portfolio screenshot still shows the previous island.
 
 ### 2026-11-28 — The beach campfire (user request; second of three chill places)

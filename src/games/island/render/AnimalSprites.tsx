@@ -4,7 +4,7 @@ import type { Mesh } from 'three';
 import type { SpriteAtlas } from '@/shared/render/spriteAtlas';
 import { ANIMAL_FRAMES, animalKey, type AnimalView } from '../assets/animalFrames';
 import type { GameState } from '../core/game/gameState';
-import type { Animal } from '../core/systems/animals';
+import { isPoultry, type Animal } from '../core/systems/animals';
 import type { LightingUniforms } from './lighting';
 import { PLAYER_SHADOW } from './objectShadows';
 import { createSpriteGeometry, setSpriteGeometryFrame } from './spriteGeometry';
@@ -34,7 +34,7 @@ function viewOf(animal: Animal): AnimalView {
 /** Which frame of its strip an animal shows now. */
 function animalFrame(animal: Animal, seconds: number): number {
   const stride = Math.floor(seconds / WALK_FRAME_SECONDS) % 2;
-  if (animal.kind === 'chicken') {
+  if (isPoultry(animal.kind)) {
     const frames = ANIMAL_FRAMES.chicken;
     if (animal.pose === 'sleep') return frames.sleep;
     if (animal.pose === 'huddle') return frames.huddle;

@@ -22,22 +22,35 @@ function legs(
   capsule(g, MID + spread, top, MID + spread, lift < 0 ? 13.6 : 14.4, 0.5, letter);
 }
 
-export function chickenView(frame: number, front: boolean): SoftGrid {
+/** A hen, or (with `rooster`) the rooster with his dark sickle tail and golden head. */
+export function chickenView(frame: number, front: boolean, rooster = false): SoftGrid {
   const g = softGrid(SIZE, SIZE);
   const f = ANIMAL_FRAMES.chicken;
   const resting = frame === f.huddle || frame === f.sleep;
+  const head = rooster ? 'h' : 'w';
   if (!resting) legs(g, frame, f.walk, 1.4, 12, 'y');
   const bodyY = resting ? 11.4 : 10.2;
-  if (!front) capsule(g, MID, bodyY - 1, MID, bodyY - 5, 1.3, 'w'); // the tail tuft, seen from behind
+  if (rooster && front) {
+    // From the front, the sickle tail just shows behind the body on each side.
+    capsule(g, MID - 2.4, bodyY - 0.6, MID - 4.4, bodyY - 3.4, 1, 'k');
+    capsule(g, MID + 2.4, bodyY - 0.6, MID + 4.4, bodyY - 3.4, 1, 'k');
+    put(g, MID + 4.2, bodyY - 3.2, 'g');
+  } else if (rooster) {
+    // From behind, a dark tuft of tail feathers over the back.
+    capsule(g, MID - 0.7, bodyY - 1, MID - 0.9, bodyY - 5.2, 1.4, 'k');
+    capsule(g, MID + 0.9, bodyY - 1, MID + 1.3, bodyY - 4.6, 1.2, 'k');
+    put(g, MID - 0.8, bodyY - 4.6, 'g');
+  } else if (!front) capsule(g, MID, bodyY - 1, MID, bodyY - 5, 1.3, 'w'); // the tail tuft, seen from behind
   ellipse(g, MID, bodyY, 4.2, resting ? 3.4 : 3.4, 'w', 's');
   ellipse(g, MID - 3.4, bodyY + 0.2, 1.2, 1.8, 's'); // wings at the sides
   ellipse(g, MID + 3.4, bodyY + 0.2, 1.2, 1.8, 's');
   const peck = frame === f.peck;
   const hy = resting ? 8 : peck ? 8.6 : 5.6;
-  if (front || peck) ellipse(g, MID, hy, 2.5, 2.3, 'w');
-  else ellipse(g, MID, hy + 0.4, 2.4, 2.1, 'w'); // the back of the head
+  if (front || peck) ellipse(g, MID, hy, 2.5, 2.3, head);
+  else ellipse(g, MID, hy + 0.4, 2.4, 2.1, head); // the back of the head
   put(g, MID - 0.5, hy - 2.4, 'r'); // comb
   put(g, MID + 0.5, hy - 2.6, 'r');
+  if (rooster) put(g, MID, hy - 3.4, 'r');
   if (front) {
     put(g, MID, hy + 0.9, 'y'); // beak
     put(g, MID, hy + 1.9, 'r'); // wattle
@@ -51,6 +64,26 @@ export function chickenView(frame: number, front: boolean): SoftGrid {
     put(g, MID - 2, hy + 0.8, 'p');
     put(g, MID + 2, hy + 0.8, 'p');
   }
+  outline(g);
+  return g;
+}
+
+/** A chick from the front or behind: a fluffy yellow ball with a round head. */
+export function chickView(frame: number, front: boolean): SoftGrid {
+  const g = softGrid(SIZE, SIZE);
+  const f = ANIMAL_FRAMES.chick;
+  const resting = frame === f.huddle || frame === f.sleep;
+  if (!resting) legs(g, frame, f.walk, 1, 13.4, 'y');
+  const bodyY = resting ? 12.8 : 12;
+  ellipse(g, MID, bodyY, 2.8, 2.3, 'w', 's');
+  const hy = resting ? 10.6 : frame === f.peck ? 11.4 : 9.2;
+  ellipse(g, MID, hy, 1.9, 1.8, 'w');
+  if (front) {
+    put(g, MID, hy + 0.8, 'y');
+    const eye = frame === f.sleep ? 'o' : 'e';
+    put(g, MID - 0.9, hy - 0.3, eye);
+    put(g, MID + 0.9, hy - 0.3, eye);
+  } else put(g, MID, bodyY - 2.4, 's'); // a tuft of fluff at the back
   outline(g);
   return g;
 }

@@ -55,8 +55,9 @@ import { buildInteriorWorld, INTERIORS } from '../world/interiors';
 import { checkDoors, ISLAND_MAP, stepTransition } from './mapTravel';
 import { stepIdleTour } from './idleTour';
 import { sitOn, standUp } from '../systems/seat';
-import { SEATS_TAKEN } from '../content/guidance';
+import { HEN_HOUSE_LINES, SEATS_TAKEN } from '../content/guidance';
 import { campfireEvening } from '../systems/campfire';
+import { roosterCrowing } from '../systems/rooster';
 import { updateSocial } from '../systems/villagerSocial';
 import {
   roamTiles,
@@ -461,6 +462,18 @@ function stepAnimals(state: GameState, stepSeconds: number, config: IslandConfig
       a.target && a.id < animal.id && !atDoor(a) ? [a.target] : [],
     );
     const others = [...people, ...mates, ...heading];
+    // A chick trots after its mother (keeping a little apart, like everyone).
+    const mother = state.animals.find((a) => a.id === animal.follows && !a.hidden) ?? null;
+    // The chicks go to bed a little before the grown-ups (so nobody jostles at the door).
+    const [bedtime] = config.wildlife.night;
+    const chickBedtime: readonly [number, number] = [
+      bedtime - config.animals.chicksToBedEarly,
+      bedtime,
+    ];
+    const ownRest =
+      animal.kind === 'chick' && rest === 'free' && duringTimes(villageTime(state), chickBedtime)
+        ? 'sleep'
+        : rest;
     updateAnimal(
       animal,
       island,
@@ -468,12 +481,17 @@ function stepAnimals(state: GameState, stepSeconds: number, config: IslandConfig
       stepSeconds,
       config.animals,
       tileSizePx,
-      rest,
+      ownRest,
       scarers,
       tilesUnder(others, island, tileSizePx),
       // Keeping a body-width apart. On the way home (all making for the same spot) the one
-      // listed first goes first, so two never stall.
-      [...people, ...(rest === 'free' ? mates : mates.filter((a) => a.id < animal.id))],
+      // listed first goes first, so two never stall; anyone already settled is gone round.
+      [
+        ...people,
+        ...(rest === 'free' ? mates : mates.filter((a) => a.id < animal.id || a.target === null)),
+      ],
+      mother,
+      animal.kind === 'rooster' && roosterCrowing(villageTime(state), config.animals),
     );
   }
 }
@@ -544,6 +562,10 @@ function interactionSettings(state: GameState, config: IslandConfig): Interactio
         villagerGreeting(villager.activity, dayPhase(villageTime(state))),
       ),
     signPages: (sign) => signpostPages({ x: sign.x, y: sign.y }, state.landmarks),
+    livePages: (object) =>
+      object.kind === 'chicken_coop'
+        ? [HEN_HOUSE_LINES[dayPhase(villageTime(state))] ?? HEN_HOUSE_LINES.morning ?? '']
+        : null,
   };
 }
 
