@@ -1,5 +1,6 @@
 // All tunable numbers for the island game live here. Generation, movement and
 // rendering read from this object instead of hard-coding values.
+// Set up CONFIG
 import type { FractalNoiseOptions } from '@/shared/engine/noise';
 
 /** An inclusive whole-number range. */
