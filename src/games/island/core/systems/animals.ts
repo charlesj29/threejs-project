@@ -14,7 +14,6 @@ import type { Rng } from '@/shared/engine/random';
 import type { IslandConfig } from '../config';
 import { villageHouses, villagerSpawns } from '../world/village';
 import { getDoorFrontTile, type World } from '../world/world';
-import { CHICKEN_RUN } from '../generation/steps/buildChickenCoop';
 import { OBJECT_REGISTRY } from '../world/objects';
 import { isWalkableTile } from '../world/tiles';
 import { SMALL_BODY, type Spot } from './bodies';
@@ -86,6 +85,8 @@ const ARRIVE_PX = 0.75;
 const FLEE_TRIES = 10;
 /** On the way home, wait this long for someone in the way before going round them (seconds). */
 const GO_ROUND_SECONDS = 1;
+/** A run is never bigger than this (tiles): stops the search if a fence ever had a gap. */
+const MAX_RUN_TILES = 40;
 /** Shelter spots are this close to a door (tiles). */
 const SHELTER_REACH_TILES = 3;
 /** A chick keeps this close to its mother (map pixels), a little behind and to one side. */
@@ -120,16 +121,29 @@ export function chickenRun(world: World): { tiles: number[]; door: number } | nu
   const coop = world.objects.find((object) => object.kind === 'chicken_coop');
   if (!coop) return null;
   const { footprint } = OBJECT_REGISTRY.chicken_coop;
+  const door = toIndex(world, coop.x, coop.y + footprint.height);
+  // Inside the fence: every open tile that can be reached from the hen house door without
+  // crossing it (whatever shape the fence takes).
   const tiles: number[] = [];
-  // The fence runs one tile round the inside, which starts at the hen house's corner.
-  for (let y = coop.y; y < coop.y + CHICKEN_RUN.height - 2; y++) {
-    for (let x = coop.x; x < coop.x + CHICKEN_RUN.width - 2; x++) {
-      const underHouse = x < coop.x + footprint.width && y < coop.y + footprint.height;
-      const i = toIndex(world, x, y);
-      if (!underHouse && world.blocked[i] === 0) tiles.push(i);
+  const seen = new Set([door]);
+  const queue = [door];
+  while (queue.length > 0 && tiles.length < MAX_RUN_TILES) {
+    const i = queue.shift() ?? door;
+    if (world.blocked[i] !== 0) continue;
+    tiles.push(i);
+    const x = i % world.width;
+    for (const n of [
+      i - world.width,
+      i + world.width,
+      x > 0 ? i - 1 : -1,
+      x < world.width - 1 ? i + 1 : -1,
+    ]) {
+      if (n < 0 || n >= world.blocked.length || seen.has(n)) continue;
+      seen.add(n);
+      queue.push(n);
     }
   }
-  return { tiles, door: toIndex(world, coop.x, coop.y + footprint.height) };
+  return { tiles, door };
 }
 
 /** Chickens in their run (or the village, if there's none) and a cat in the village; none when switched off. */

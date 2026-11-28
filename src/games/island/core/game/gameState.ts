@@ -390,7 +390,10 @@ function stepRabbits(state: GameState, stepSeconds: number, config: IslandConfig
   const player = onIsland(state) ? state.player : null;
   const people = [...villagersAbout(state), ...playmateSpots(state), ...animalsAbout(state)];
   for (const rabbit of state.rabbits) {
-    const others = [...people, ...state.rabbits.filter((r) => r !== rabbit)];
+    const mates = state.rabbits.filter((r) => r !== rabbit);
+    // Where the others are, and where any mid-hop are landing (two never hop into one tile).
+    const landing = mates.flatMap((r) => (r.hop ? [{ x: r.hop.toX, y: r.hop.toY }] : []));
+    const others = [...people, ...mates, ...landing];
     updateRabbit(
       rabbit,
       island,

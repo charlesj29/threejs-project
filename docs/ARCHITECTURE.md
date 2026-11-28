@@ -241,16 +241,21 @@ flowchart LR
   ripple rings and blended steam (`mist_steam_*`, one mist material per puff; thickness from
   `render/springSteam.ts`). The night owl soaks there late in the afternoon (`soak` activity).
   Sound: the `spring` layer (lapping bed + bubbles) by distance.
-- **Chicken run:** `generation/steps/buildChickenCoop.ts` places the fenced pen (with a
-  `fence_gate`), the hen house, a `feed_trough`, a `water_dish`, a `straw_patch` and `sunflower`s
-  outside the fence; if no spot fits it tries closer to the village, then sand, then without the
-  walkway (gate reachable and `quietSpots.staysConnected`), and `validateGeneration` requires it.
+- **Chicken run:** `generation/steps/buildChickenCoop.ts` places an L-shaped pen (`RUN_LAYOUTS`:
+  the L and its mirror; the hen house always top-left inside) with a `fence_gate`, the hen house,
+  a `feed_trough`, a `water_dish` and a `straw_patch`. It scores every spot by the walk from the
+  bakery plus what it would clear (nature under the run and its walkway makes way: a glade; built
+  things never), prefers spots touching the village, keeps `chickenCoopHomesGapTiles` from the
+  cottage and the workspace, checks the gate is reachable and nobody is cut off
+  (`quietSpots.staysConnected`); `validateGeneration` requires it. `chickenRun` (animals) walks the
+  inside of the fence from the hen house door, so any shape works.
   `core/systems/animals.ts`: hens, a rooster and chicks (`isPoultry`); chicks keep
-  `followOffset` from their mother (`follows`); hens and the rooster take `chores` (beside the
-  trough and dish, `choreChance`) and face them; a bird whose rain spot is taken picks another
-  free one, and settled birds are always gone round. `core/systems/rooster.ts`: `crowTimes`;
-  `render/RoosterCrow` floats notes, `ui/AmbientSound` plays `crow` (layer `rooster`, by distance
-  to the hen house). The hen house says what the hens are up to (`livePages`, `HEN_HOUSE_LINES`).
+  `followOffset` from their mother (`follows`) and go to bed a little earlier; hens and the rooster
+  take `chores` (beside the trough and dish, `choreChance`) and face them; a bird whose rain spot
+  is taken picks another free one, and settled birds are always gone round.
+  `core/systems/rooster.ts`: `crowTimes`; `render/RoosterCrow` floats notes, `ui/AmbientSound`
+  plays `crow` (layer `rooster`, by distance to the hen house). The hen house says what the hens
+  are up to (`livePages`, `HEN_HOUSE_LINES`). Rabbits never hop into the tile another is landing on.
 - **Beach campfire:** `generation/steps/placeCampfire.ts` (after the hot spring: a 4×4 patch
   with `log_bench`, two `log_stool_*` seats facing the fire and the 2×2 `campfire`, by the sea and
   touching the beach, nearest the village; the patch turns to sand, with a sandy strip to the beach

@@ -93,6 +93,21 @@
 
 ## Session log
 
+### 2026-11-28 — Chicken run: L-shaped, away from the cottage, no sunflowers (user request)
+
+- The run is an L now (or its mirror, whichever fits), not a box. The sunflowers are gone (the
+  user didn't like them). Two hens, a rooster and two chicks.
+- It sits just outside the village (touching its edge on every seed checked), at least
+  `village.chickenCoopHomesGapTiles` (7) from the cottage and the workspace. Where trees, bushes
+  or rocks stand in the way it clears a little glade (spots that clear less win); anything built
+  never moves. Checked on 122 seeds: every island has its run near the village and away from the
+  houses, and none changes because of it. On the default island it is on the east side of the
+  village, by the market. Re-baked.
+- Fixed on the way: two rabbits could hop into the same tile at once.
+- **Verified:** typecheck, lint, tests (layout, near the village, away from the cottage and the
+  workspace, only nature cleared, required; birds; nobody walks through anybody), build;
+  browser: the run by the market.
+
 ### 2026-11-28 — A livelier chicken run, on every island (user request)
 
 - Every island now has the chicken run: if no spot fits just outside the village, it tries closer

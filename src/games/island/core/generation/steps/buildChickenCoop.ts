@@ -1,201 +1,255 @@
-import { toIndex } from '@/shared/engine/grid';
+import { distanceField, EIGHT_DIRECTIONS, toIndex } from '@/shared/engine/grid';
+import { OBJECT_REGISTRY, type ObjectCategory, type ObjectKind } from '../../world/objects';
 import { isWalkableTile, TileId } from '../../world/tiles';
 import { villageHouses, villageTiles } from '../../world/village';
-import { getDoorFrontTile, type WorldObject } from '../../world/world';
-import type { ObjectKind } from '../../world/objects';
+import { getDoorFrontTile, NO_OBJECT, type WorldObject } from '../../world/world';
 import { createStepRng, type GenerationContext, type GenerationStep } from '../context';
 import { addObject, objectLayerWithout } from '../objectLayer';
-import { isClear, makesWay, reachedFromCabin, staysConnected } from '../quietSpots';
+import { reachedFromCabin, staysConnected } from '../quietSpots';
 
-/** The run, fence included (tiles); the hen house stands in its top-left corner inside. */
-export const CHICKEN_RUN = { width: 7, height: 5 } as const;
+interface Piece {
+  readonly kind: ObjectKind;
+  readonly x: number;
+  readonly y: number;
+}
+
+/**
+ * The run is an L (tiles from its top-left): F fence, G the gate, . inside, a
+ * space outside. The hen house always stands in the top-left corner inside;
+ * the L's cut corner is at the bottom right, or (mirrored) the bottom left.
+ *
+ *     F F F F F F F            F F F F F F F
+ *     F H H . . T F            F H H . . T F    H: hen house (2×2)
+ *     F H H . . . F            F H H . . . F    T: feed trough
+ *     F . . . . W F            F . . . . W F    W: water dish
+ *     F ~ . . F F F            F F F ~ . . F    ~: a straw patch
+ *     F . . . F                    F . . . F
+ *     F F G F F                    F F G F F
+ */
+export const RUN_LAYOUTS: readonly {
+  readonly rows: readonly string[];
+  readonly pieces: readonly Piece[];
+}[] = [
+  {
+    rows: ['FFFFFFF', 'F.....F', 'F.....F', 'F.....F', 'F...FFF', 'F...F  ', 'FFGFF  '],
+    pieces: [
+      { kind: 'chicken_coop', x: 1, y: 1 },
+      { kind: 'feed_trough', x: 5, y: 1 },
+      { kind: 'water_dish', x: 5, y: 3 },
+      { kind: 'straw_patch', x: 1, y: 4 },
+    ],
+  },
+  {
+    rows: ['FFFFFFF', 'F.....F', 'F.....F', 'F.....F', 'FFF...F', '  F...F', '  FFGFF'],
+    pieces: [
+      { kind: 'chicken_coop', x: 1, y: 1 },
+      { kind: 'feed_trough', x: 5, y: 1 },
+      { kind: 'water_dish', x: 5, y: 3 },
+      { kind: 'straw_patch', x: 3, y: 4 },
+    ],
+  },
+];
+/** The run's bounding box (tiles), the same for every layout. */
+export const CHICKEN_RUN = { width: 7, height: 7 } as const;
 /** A clear ring of walkable ground round the fence, so the run never cuts anyone's way. */
 const MARGIN = 1;
-/** Among the few spots nearest the bakery (or the village's middle), one is picked at random. */
-const NEAREST_CHOICES = 3;
-
-/**
- * What else goes in and round the run (tiles from the run's top-left, fence included):
- *
- *     F F F F F F F
- *     F H H . . T F s     H: hen house (2×2)   T: feed trough   W: water dish
- *     F H H . . . F s     .: open ground       ~: a straw patch
- *     F . . ~ . W F s     G: the gate          s: sunflowers outside the fence
- *     F F F G F F F
- */
-const GATE = { x: 3, y: CHICKEN_RUN.height - 1 } as const;
-const PIECES: readonly { readonly kind: ObjectKind; readonly x: number; readonly y: number }[] = [
-  { kind: 'chicken_coop', x: 1, y: 1 },
-  { kind: 'feed_trough', x: 5, y: 1 },
-  { kind: 'water_dish', x: 5, y: 3 },
-  { kind: 'straw_patch', x: 3, y: 3 },
-  { kind: 'sunflower', x: CHICKEN_RUN.width, y: 1 },
-  { kind: 'sunflower', x: CHICKEN_RUN.width, y: 2 },
-  { kind: 'sunflower', x: CHICKEN_RUN.width, y: 3 },
-];
-
-/**
- * The ways to try, in order: just outside the village on grass, then closer in, then sand too;
- * last, without the clear walkway all round (trees may stand by the fence), as long as the gate
- * can be reached and the run cuts nobody's way anywhere.
- */
-interface Attempt {
-  readonly villageGap: number;
-  readonly ground: ReadonlySet<number>;
-  readonly walkway: boolean;
-}
-const GRASS = new Set<number>([TileId.Grass]);
-const GRASS_OR_SAND = new Set<number>([TileId.Grass, TileId.Sand]);
-const ATTEMPTS: readonly Attempt[] = [
-  { villageGap: 2, ground: GRASS, walkway: true },
-  { villageGap: 1, ground: GRASS, walkway: true },
-  { villageGap: 1, ground: GRASS_OR_SAND, walkway: true },
-  { villageGap: 1, ground: GRASS_OR_SAND, walkway: false },
-];
-/** Without the walkway, only this many of the nearest spots are checked for cutting anyone off. */
+/** Among the few best spots, one is picked at random. */
+const BEST_CHOICES = 3;
+/** "Near the village": the run's nearest tile within this many steps of it (preferred). */
+const NEAR_VILLAGE_TILES = 3;
+/** Each tree, bush or rock the glade would clear counts like this many tiles further away. */
+const CLEARING_COST = 2;
+/** Only this many of the best spots are checked for cutting anyone off. */
 const CONNECTED_CHECKS = 40;
+/** Nature makes way for the run (it clears a little glade); anything people built never does. */
+const NATURAL: ReadonlySet<ObjectCategory> = new Set([
+  'tree',
+  'bush',
+  'rock',
+  'deadwood',
+  'flower',
+  'grass',
+  'ground',
+]);
+/** The run stands on open land: grass or sand (never a trail, never water). */
+const LAND = new Set<number>([TileId.Grass, TileId.Sand]);
+
+type Layout = (typeof RUN_LAYOUTS)[number];
+
+/** What a tile of a layout is: 'F', 'G', '.' or ' ' (outside). */
+const cellAt = (layout: Layout, dx: number, dy: number): string => layout.rows[dy]?.[dx] ?? ' ';
+
+/** The gate of a layout, from the run's top-left. */
+function gateOf(layout: Layout): { x: number; y: number } {
+  const y = layout.rows.findIndex((row) => row.includes('G'));
+  return { x: layout.rows[y]?.indexOf('G') ?? 0, y };
+}
 
 interface Spot {
   readonly x: number;
   readonly y: number;
-  readonly distance: number;
+  readonly layout: Layout;
+  /** Lower is better: the walk from the bakery, plus what the glade would clear. */
+  readonly score: number;
+  readonly near: boolean;
 }
 
-function findSpots(
-  context: GenerationContext,
-  anchor: { x: number; y: number },
-  inVillage: ReadonlySet<number>,
-  { villageGap, ground, walkway: needsWalkway }: Attempt,
-  reached: Uint8Array,
-): Spot[] {
-  const { size, terrain } = context;
-  const at = (x: number, y: number): number | null =>
-    x < 0 || y < 0 || x >= size.width || y >= size.height ? null : toIndex(size, x, y);
-  const nearVillage = (x: number, y: number): boolean => {
-    for (let dy = -villageGap; dy <= villageGap; dy++) {
-      for (let dx = -villageGap; dx <= villageGap; dx++) {
-        const i = at(x + dx, y + dy);
-        if (i !== null && inVillage.has(i)) return true;
-      }
+/** May this object make way for the run? (natural, and not a hot spring or the like) */
+function natural(object: WorldObject): boolean {
+  const definition = OBJECT_REGISTRY[object.kind];
+  return NATURAL.has(definition.category) && object.kind !== 'hot_spring';
+}
+
+/** Every spot the run (and its walkway round it) could take, with how good it is. */
+function findSpots(context: GenerationContext, homesGap: number): Spot[] {
+  const { size, terrain, occupancy, objects, village } = context;
+  const inVillage = new Set(village ? villageTiles(village, size) : []);
+  const bakery = villageHouses({ objects }).find((h) => h.kind === 'house_bakery');
+  const villageList = [...inVillage];
+  const anchor = bakery
+    ? getDoorFrontTile(bakery)
+    : {
+        x: villageList.reduce((s, t) => s + (t % size.width), 0) / Math.max(1, villageList.length),
+        y:
+          villageList.reduce((s, t) => s + Math.floor(t / size.width), 0) /
+          Math.max(1, villageList.length),
+      };
+  const homes = new Set<number>();
+  for (const o of objects) {
+    if (o.kind !== 'cabin' && o.kind !== 'studio') continue;
+    const { footprint } = OBJECT_REGISTRY[o.kind];
+    for (let dy = 0; dy < footprint.height; dy++) {
+      for (let dx = 0; dx < footprint.width; dx++) homes.add(toIndex(size, o.x + dx, o.y + dy));
     }
-    return false;
-  };
-  /** The pen's own tiles: open ground, off the paths, clear of the village. */
-  const penTile = (x: number, y: number): boolean => {
-    const i = at(x, y);
-    return i !== null && ground.has(terrain[i] ?? 0) && isClear(context, i) && !nearVillage(x, y);
-  };
-  /** The ring round it: open, walkable ground. */
-  const walkway = (x: number, y: number): boolean => {
-    const i = at(x, y);
-    return i !== null && isWalkableTile(terrain[i] ?? 0) && isClear(context, i);
-  };
-  const fits = (left: number, top: number): boolean => {
-    for (let y = top - MARGIN; y < top + CHICKEN_RUN.height + MARGIN; y++) {
-      for (let x = left - MARGIN; x < left + CHICKEN_RUN.width + MARGIN; x++) {
-        const ring =
-          x < left || y < top || x >= left + CHICKEN_RUN.width || y >= top + CHICKEN_RUN.height;
-        if (ring ? needsWalkway && !walkway(x, y) : !penTile(x, y)) return false;
-      }
-    }
-    // Without the walkway, at least the way up to the gate is open.
-    const gateFront = at(left + GATE.x, top + GATE.y + 1);
-    return (
-      needsWalkway ||
-      (gateFront !== null && walkway(left + GATE.x, top + GATE.y + 1) && reached[gateFront] === 1)
-    );
+  }
+  const fromHomes = distanceField(size, (i) => homes.has(i), EIGHT_DIRECTIONS);
+  const fromVillage = distanceField(size, (i) => inVillage.has(i), EIGHT_DIRECTIONS);
+  /** 0: free; 1: a natural thing that would be cleared; -1: something that can't move. */
+  const clearing = (i: number): number => {
+    const id = occupancy[i] ?? NO_OBJECT;
+    const object = id === NO_OBJECT ? undefined : objects[id];
+    if (!object) return 0;
+    if (!natural(object)) return -1;
+    return OBJECT_REGISTRY[object.kind].blocksMovement ? 1 : 0;
   };
   const spots: Spot[] = [];
   for (let top = MARGIN; top + CHICKEN_RUN.height + MARGIN <= size.height; top++) {
     for (let left = MARGIN; left + CHICKEN_RUN.width + MARGIN <= size.width; left++) {
-      if (!fits(left, top)) continue;
-      const cx = left + CHICKEN_RUN.width / 2;
-      const cy = top + CHICKEN_RUN.height / 2;
-      spots.push({ x: left, y: top, distance: Math.hypot(cx - anchor.x, cy - anchor.y) });
+      for (const layout of RUN_LAYOUTS) {
+        let cleared = 0;
+        let nearest = Infinity;
+        let ok = true;
+        for (let y = top - MARGIN; ok && y < top + CHICKEN_RUN.height + MARGIN; y++) {
+          for (let x = left - MARGIN; x < left + CHICKEN_RUN.width + MARGIN; x++) {
+            const i = toIndex(size, x, y);
+            const pen = cellAt(layout, x - left, y - top) !== ' ';
+            const tile = terrain[i] ?? 0;
+            const clear = clearing(i);
+            // Away from the cottage and the workspace; outside the village; open land under the
+            // pen, walkable ground round it; nothing built in the way.
+            if (
+              (fromHomes[i] ?? 0) < homesGap ||
+              inVillage.has(i) ||
+              clear < 0 ||
+              (pen ? !LAND.has(tile) : !isWalkableTile(tile))
+            ) {
+              ok = false;
+              break;
+            }
+            cleared += clear;
+            if (pen) nearest = Math.min(nearest, fromVillage[i] ?? Infinity);
+          }
+        }
+        if (!ok) continue;
+        const cx = left + CHICKEN_RUN.width / 2;
+        const cy = top + CHICKEN_RUN.height / 2;
+        const score = Math.hypot(cx - anchor.x, cy - anchor.y) + CLEARING_COST * cleared;
+        spots.push({ x: left, y: top, layout, score, near: nearest <= NEAR_VILLAGE_TILES });
+      }
     }
   }
   return spots;
 }
 
+/** The run's own tiles (fence included), and the walkway ring round it. */
+function areaOf(
+  spot: Spot,
+  size: { width: number; height: number },
+): {
+  run: Set<number>;
+  ring: Set<number>;
+} {
+  const run = new Set<number>();
+  const ring = new Set<number>();
+  for (let y = spot.y - MARGIN; y < spot.y + CHICKEN_RUN.height + MARGIN; y++) {
+    for (let x = spot.x - MARGIN; x < spot.x + CHICKEN_RUN.width + MARGIN; x++) {
+      const pen = cellAt(spot.layout, x - spot.x, y - spot.y) !== ' ';
+      (pen ? run : ring).add(toIndex(size, x, y));
+    }
+  }
+  return { run, ring };
+}
+
 /**
- * A chicken run near the village: a fenced pen with a gate, a little hen house,
- * a feed trough, a water dish and a straw patch, with sunflowers along the
- * outside of the fence; on open grass just outside the village (off the paths,
- * with a clear walkway all round), as near the bakery as there is room. If no
- * spot fits, it tries closer to the village, then on sand too, then without the
- * walkway (as long as the run cuts nobody off), so every island has one. Runs after everything else that places objects (only the quiet
- * places and the spawn come later), so adding it moves nothing else; only the
- * meadow flowers and tufts where it stands are cleared.
+ * A chicken run just outside the village: an L-shaped fenced pen with a gate, a
+ * little hen house, a feed trough, a water dish and a straw patch, with a clear
+ * walkway all round, well away from the cottage and the workspace, as near the
+ * bakery as it can be. Where trees, bushes or rocks stand in the way it clears a
+ * little glade (spots that clear less are preferred); anything built (fences,
+ * houses, trails) never moves. Spots near the village come first; only if none
+ * fits does it go further out, and only if nothing fits at all does it come
+ * closer to the cottage and the workspace, so every island has one. Runs after
+ * everything else that places objects (only the quiet places and the spawn come
+ * later), so nothing else moves.
  */
 export const buildChickenCoop: GenerationStep = (context) => {
   const { size, village, config } = context;
   if (!village || !config.village.chickenCoop) return context;
-  const inside = villageTiles(village, size);
-  const insideSet = new Set(inside);
-  const bakery = villageHouses({ objects: context.objects }).find((h) => h.kind === 'house_bakery');
-  const anchor = bakery
-    ? getDoorFrontTile(bakery)
-    : {
-        x: Math.round(inside.reduce((s, t) => s + (t % size.width), 0) / inside.length),
-        y: Math.round(inside.reduce((s, t) => s + Math.floor(t / size.width), 0) / inside.length),
-      };
   const reached = reachedFromCabin(context);
-  let spots: Spot[] = [];
-  for (const attempt of ATTEMPTS) {
-    spots = findSpots(context, anchor, insideSet, attempt, reached);
-    spots.sort((a, b) => a.distance - b.distance);
-    if (!attempt.walkway) {
-      // No walkway all round: keep only runs that close nobody's way off.
-      spots = spots
+  let chosen: Spot[] = [];
+  for (const homesGap of [config.village.chickenCoopHomesGapTiles, 2]) {
+    const spots = findSpots(context, homesGap);
+    for (const nearOnly of [true, false]) {
+      chosen = spots
+        .filter((s) => !nearOnly || s.near)
+        .sort((a, b) => a.score - b.score)
         .slice(0, CONNECTED_CHECKS)
-        .filter((s) => staysConnected(context, reached, runTiles(context, s)));
+        .filter((s) => {
+          // The gate's front is reachable, and the run cuts nobody off.
+          const gate = gateOf(s.layout);
+          const front = toIndex(size, s.x + gate.x, s.y + gate.y + 1);
+          return reached[front] === 1 && staysConnected(context, reached, areaOf(s, size).run);
+        })
+        .slice(0, BEST_CHOICES);
+      if (chosen.length > 0) break;
     }
-    if (spots.length > 0) break;
+    if (chosen.length > 0) break;
   }
-  if (spots.length === 0) return context;
+  if (chosen.length === 0) return context;
   const rng = createStepRng(context, 'buildChickenCoop');
-  const spot = rng.pick(spots.slice(0, NEAREST_CHOICES));
-  const taken = new Set(PIECES.map((p) => `${String(spot.x + p.x)},${String(spot.y + p.y)}`));
-  const inPen = (o: WorldObject): boolean =>
-    o.x >= spot.x &&
-    o.y >= spot.y &&
-    o.x < spot.x + CHICKEN_RUN.width &&
-    o.y < spot.y + CHICKEN_RUN.height;
-  const layer = objectLayerWithout(
-    context,
-    (o) => makesWay(o) && (inPen(o) || taken.has(`${String(o.x)},${String(o.y)}`)),
-  );
-  // The fence all round (with the gate in the front), then everything in and round the run.
-  for (let y = spot.y; y < spot.y + CHICKEN_RUN.height; y++) {
-    for (let x = spot.x; x < spot.x + CHICKEN_RUN.width; x++) {
-      const edge =
-        x === spot.x ||
-        y === spot.y ||
-        x === spot.x + CHICKEN_RUN.width - 1 ||
-        y === spot.y + CHICKEN_RUN.height - 1;
-      if (!edge) continue;
-      const gate = x === spot.x + GATE.x && y === spot.y + GATE.y;
-      addObject(layer, gate ? 'fence_gate' : 'fence', x, y);
+  const spot = rng.pick(chosen);
+  const { run, ring } = areaOf(spot, size);
+  // Clear the glade: nature under the run and its walkway makes way (big trees reaching in too).
+  const inArea = (o: WorldObject): boolean => {
+    const { footprint } = OBJECT_REGISTRY[o.kind];
+    for (let dy = 0; dy < footprint.height; dy++) {
+      for (let dx = 0; dx < footprint.width; dx++) {
+        const i = toIndex(size, o.x + dx, o.y + dy);
+        if (run.has(i) || ring.has(i)) return true;
+      }
     }
-  }
-  for (const piece of PIECES) {
-    const x = spot.x + piece.x;
-    const y = spot.y + piece.y;
-    // Sunflowers only on open grass or sand (not a trail; there may be trees by the fence).
-    const i = toIndex(size, x, y);
-    const open = GRASS_OR_SAND.has(context.terrain[i] ?? 0) && isClear(context, i);
-    if (piece.kind === 'sunflower' && !open) continue;
-    addObject(layer, piece.kind, x, y);
+    return false;
+  };
+  const layer = objectLayerWithout(context, (o) => natural(o) && inArea(o));
+  // The fence (with the gate), then everything inside.
+  spot.layout.rows.forEach((row, dy) => {
+    [...row].forEach((cell, dx) => {
+      if (cell === 'F') addObject(layer, 'fence', spot.x + dx, spot.y + dy);
+      if (cell === 'G') addObject(layer, 'fence_gate', spot.x + dx, spot.y + dy);
+    });
+  });
+  for (const piece of spot.layout.pieces) {
+    addObject(layer, piece.kind, spot.x + piece.x, spot.y + piece.y);
   }
   return { ...context, objects: layer.objects, occupancy: layer.occupancy };
 };
-
-/** The run's tiles (fence included). */
-function runTiles(context: GenerationContext, spot: { x: number; y: number }): Set<number> {
-  const tiles = new Set<number>();
-  for (let y = spot.y; y < spot.y + CHICKEN_RUN.height; y++) {
-    for (let x = spot.x; x < spot.x + CHICKEN_RUN.width; x++)
-      tiles.add(toIndex(context.size, x, y));
-  }
-  return tiles;
-}

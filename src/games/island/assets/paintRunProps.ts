@@ -1,8 +1,6 @@
-// In and round the chicken run: a wooden gate (a fence tile; the rails of the
-// fence beside it run up to its posts), a feed trough full of grain, a water
-// dish, a patch of straw, and tall sunflowers along the outside of the fence.
-// 16×16 each, the sunflowers 16×28 (they rise above their tile). Light from
-// the top-left, like everything else.
+// In the chicken run: a wooden gate (a fence tile; the rails of the fence
+// beside it run up to its posts), a feed trough full of grain, a water dish
+// and a patch of straw. 16×16 each. Light from the top-left, like everything else.
 import type { SpriteSource } from '@/shared/render/atlasLayout';
 import {
   createPixelCanvas,
@@ -101,42 +99,11 @@ function strawPatch(): PixelCanvas {
   return c;
 }
 
-/** One big sunflower and a smaller one beside it, on leafy stems. */
-function sunflower(): PixelCanvas {
-  const c = createPixelCanvas(16, 28);
-  const leaf = PALETTE.leafy;
-  const petal = hexToRgba('#f6c83a');
-  const petalShade = hexToRgba('#d8962a');
-  const seeds = hexToRgba('#6a4224');
-  const head = (cx: number, cy: number, r: number): void => {
-    fillShape(c, (x, y) => insideEllipse(x, y, cx, cy, r, r), petal, petalShade);
-    fillShape(c, (x, y) => insideEllipse(x, y, cx, cy, r * 0.45, r * 0.45), seeds);
-    setPixel(c, Math.round(cx - r * 0.5), Math.round(cy - r * 0.6), hexToRgba('#fde68a'));
-  };
-  // Stems and leaves.
-  fillRect(c, 9, 9, 2, 19, leaf.dark);
-  fillRect(c, 4, 15, 1, 13, leaf.dark);
-  // A leaf each side: a pointed blade, lit on top.
-  const blade = (x: number, y: number, dir: 1 | -1): void => {
-    fillRect(c, dir > 0 ? x : x - 3, y - 1, 4, 1, leaf.light);
-    fillRect(c, dir > 0 ? x : x - 4, y, 5, 1, leaf.base);
-    setPixel(c, x + dir * 5, y, leaf.dark);
-    fillRect(c, dir > 0 ? x + 1 : x - 3, y + 1, 3, 1, leaf.dark);
-  };
-  blade(11, 17, 1);
-  blade(8, 21, -1);
-  blade(3, 23, -1);
-  head(10, 6, 5);
-  head(4, 13, 3.2);
-  return c;
-}
-
 export function paintRunPropSprites(): SpriteSource[] {
   return [
     { key: 'fence_gate', frames: [gate()] },
     { key: 'feed_trough', frames: [feedTrough()] },
     { key: 'water_dish', frames: [waterDish()] },
     { key: 'straw_patch', frames: [strawPatch()] },
-    { key: 'sunflower', frames: [sunflower()] },
   ];
 }

@@ -50,7 +50,6 @@ export const OBJECT_KINDS = [
   'feed_trough',
   'water_dish',
   'straw_patch',
-  'sunflower',
   'hot_spring',
   'stone_lantern',
   'campfire',
@@ -313,7 +312,7 @@ export const OBJECT_REGISTRY: Readonly<Record<ObjectKind, ObjectDefinition>> = {
     spriteKey: 'log_stool',
     interaction: { sit: true, faces: 'left' },
   },
-  // In and round the chicken run: a gate in the fence, a trough, a dish, straw, sunflowers.
+  // In the chicken run: a gate in the fence, a trough, a dish, straw.
   fence_gate: {
     ...solid('fence_gate', 'Gate', 'structure', '#d8bc8c'),
     interaction: says('A little gate, latched so the hens stay in.'),
@@ -321,8 +320,6 @@ export const OBJECT_REGISTRY: Readonly<Record<ObjectKind, ObjectDefinition>> = {
   feed_trough: decoration('feed_trough', 'Feed trough', 'ground', '#a87038'),
   water_dish: decoration('water_dish', 'Water dish', 'ground', '#8d8f94'),
   straw_patch: decoration('straw_patch', 'Straw', 'ground', '#e0c070'),
-  // Tall and leafy, but you can brush past them (like the washing line).
-  sunflower: decoration('sunflower', 'Sunflowers', 'structure', '#f2c234'),
   cat_sleeping: {
     ...solid('cat_sleeping', 'Sleeping cat', 'structure', '#e0893a'),
     interaction: says('Fast asleep by the fire, purring softly.'),

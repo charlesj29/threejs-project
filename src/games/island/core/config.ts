@@ -131,6 +131,8 @@ export interface IslandConfig {
     readonly laundryLines: number;
     /** A fenced chicken run with a hen house just outside the village (placed last, like the lines). */
     readonly chickenCoop: boolean;
+    /** The chicken run keeps at least this many tiles from the cottage and the workspace. */
+    readonly chickenCoopHomesGapTiles: number;
   };
   /** The village's chickens and cat. */
   readonly animals: {
@@ -764,10 +766,11 @@ export const ISLAND_CONFIG: IslandConfig = {
     clearedObjectCost: 3,
     laundryLines: 2,
     chickenCoop: true,
+    chickenCoopHomesGapTiles: 7,
   },
   animals: {
     enabled: true,
-    chickens: 3,
+    chickens: 2,
     roosters: 1,
     chicks: 2,
     chicksToBedEarly: 0.012,

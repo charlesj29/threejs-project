@@ -27,12 +27,11 @@ describe('village animals', () => {
 
   const state = simulate(40);
 
-  it('are three hens, a rooster, two chicks and a cat', () => {
+  it('are two hens, a rooster, two chicks and a cat', () => {
     expect(state.animals.map((a) => a.kind).sort()).toEqual([
       'cat',
       'chick',
       'chick',
-      'chicken',
       'chicken',
       'chicken',
       'rooster',
@@ -80,7 +79,9 @@ describe('village animals', () => {
     };
     const busy = createGameState(generateValidWorld(46), busyConfig);
     Object.assign(busy, { timeOfDay: 0.4 });
-    const hen = busy.animals.find((a) => a.kind === 'chicken');
+    // (The hen without chicks: the mother potters about slowly, her chicks underfoot.)
+    const mothers = new Set(busy.animals.map((a) => a.follows));
+    const hen = busy.animals.find((a) => a.kind === 'chicken' && !mothers.has(a.id));
     if (!hen) throw new Error('no hen');
     expect(hen.chores.length).toBe(2);
     let atChore = false;

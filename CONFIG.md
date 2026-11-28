@@ -8,21 +8,22 @@ Change a value, save, and the page updates (`npm run dev`).
 
 ## Quick switches
 
-| Setting                             | What it does                                                                       |
-| ----------------------------------- | ---------------------------------------------------------------------------------- |
-| `render.zoomEnabled`                | Allow zooming with + / − (and the phone zoom buttons).                             |
-| `touch.controls`                    | Phones: the small interact button (walking is tap, or hold a finger to steer).     |
-| `touch.holdMs`, `touch.stopTiles`   | Phones: how long a hold before it steers; how close to the finger it stops.        |
-| `pointer.clickToWalk`               | Click the screen to walk there (phones always tap to walk).                        |
-| `tour.enabled`                      | The slow camera tour after a minute without input.                                 |
-| `debug.showClock`                   | The clock at the top right.                                                        |
-| `debug.alwaysShowFps`               | Always show the FPS, on the live site too (F3: dev server only).                   |
-| `debug.fpsOnly`                     | F3 shows only the FPS (`false`: also tile and camera).                             |
-| `rabbits.enabled` / `ducks.enabled` | The rabbits near the village / the ducks on the lake.                              |
-| `animals.enabled`                   | The chickens (in their run) and the village cat.                                   |
-| `village.chickenCoop`               | A fenced chicken run with a hen house just outside the village (re-bake to apply). |
-| `birds.enabled`                     | Little birds in the village and seagulls over the sea.                             |
-| `playmates.enabled`                 | The village kid and the puppy.                                                     |
+| Setting                             | What it does                                                                                |
+| ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| `render.zoomEnabled`                | Allow zooming with + / − (and the phone zoom buttons).                                      |
+| `touch.controls`                    | Phones: the small interact button (walking is tap, or hold a finger to steer).              |
+| `touch.holdMs`, `touch.stopTiles`   | Phones: how long a hold before it steers; how close to the finger it stops.                 |
+| `pointer.clickToWalk`               | Click the screen to walk there (phones always tap to walk).                                 |
+| `tour.enabled`                      | The slow camera tour after a minute without input.                                          |
+| `debug.showClock`                   | The clock at the top right.                                                                 |
+| `debug.alwaysShowFps`               | Always show the FPS, on the live site too (F3: dev server only).                            |
+| `debug.fpsOnly`                     | F3 shows only the FPS (`false`: also tile and camera).                                      |
+| `rabbits.enabled` / `ducks.enabled` | The rabbits near the village / the ducks on the lake.                                       |
+| `animals.enabled`                   | The chickens (in their run) and the village cat.                                            |
+| `village.chickenCoop`               | A fenced chicken run with a hen house just outside the village (re-bake to apply).          |
+| `village.chickenCoopHomesGapTiles`  | How far the chicken run keeps from the cottage and the workspace (tiles; re-bake to apply). |
+| `birds.enabled`                     | Little birds in the village and seagulls over the sea.                                      |
+| `playmates.enabled`                 | The village kid and the puppy.                                                              |
 
 ## Time, light and weather
 
