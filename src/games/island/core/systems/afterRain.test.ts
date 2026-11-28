@@ -20,6 +20,7 @@ const weather = (w: Partial<Weather>): Weather => ({
   timeLeft: 10,
   intensity: 0,
   sinceRain: NO_RAIN_YET,
+  showers: 0,
   ...w,
 });
 

@@ -7,14 +7,20 @@ const settings = ISLAND_CONFIG.weather;
 const STEP = 1 / 10;
 
 describe('weather', () => {
-  it('starts clear and stays clear for at least the shortest clear spell', () => {
+  it('starts clear; the first shower comes early and is short', () => {
     const weather = createWeather(createRng(1), settings);
     expect(weather).toMatchObject({ raining: false, intensity: 0 });
     const rng = createRng(2);
-    for (let t = 0; t < settings.minClearSeconds - 1; t += STEP) {
-      updateWeather(weather, rng, STEP, settings);
-    }
-    expect(weather.intensity).toBe(0);
+    let t = 0;
+    for (; !weather.raining; t += STEP) updateWeather(weather, rng, STEP, settings);
+    expect(t).toBeCloseTo(settings.firstClearSeconds, 0);
+    const started = t;
+    for (; weather.raining; t += STEP) updateWeather(weather, rng, STEP, settings);
+    expect(t - started).toBeCloseTo(settings.firstRainSeconds, 0);
+    // Then a usual dry spell.
+    const dry = t;
+    for (; !weather.raining; t += STEP) updateWeather(weather, rng, STEP, settings);
+    expect(t - dry).toBeGreaterThanOrEqual(settings.minClearSeconds - STEP);
   });
 
   it('rains now and then: showers of the configured length, easing in and out', () => {
@@ -40,7 +46,8 @@ describe('weather', () => {
     const shortestCycle = settings.minClearSeconds + settings.minRainSeconds;
     expect(showers.length).toBeGreaterThanOrEqual(Math.floor(3600 / longestCycle) - 1);
     expect(showers.length).toBeLessThanOrEqual(Math.ceil(3600 / shortestCycle));
-    for (const length of showers) {
+    // (The first shower has its own length.)
+    for (const length of showers.slice(1)) {
       expect(length).toBeGreaterThanOrEqual(settings.minRainSeconds - STEP);
       expect(length).toBeLessThanOrEqual(settings.maxRainSeconds + STEP);
     }

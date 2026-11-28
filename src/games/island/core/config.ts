@@ -456,6 +456,13 @@ export interface IslandConfig {
   >;
   /** Clear spells and gentle rain showers (seconds of real time). */
   readonly weather: {
+    /**
+     * The first shower of a visit: this long after arriving, lasting this long (early and short,
+     * so the rain, the puddles and the splashing come soon and the first evening stays dry).
+     */
+    readonly firstClearSeconds: number;
+    readonly firstRainSeconds: number;
+    /** After that: dry spells and showers between these lengths (seconds). */
     readonly minClearSeconds: number;
     readonly maxClearSeconds: number;
     readonly minRainSeconds: number;
@@ -890,7 +897,7 @@ export const ISLAND_CONFIG: IslandConfig = {
     minGapTiles: 4,
     maxSeaTiles: 3,
     choices: 3,
-    litTimes: [0.7, 0.25],
+    litTimes: [0.68, 0.25],
     everyDays: 2,
     glowOpacity: 0.45,
     glowFlicker: 0.08,
@@ -957,28 +964,30 @@ export const ISLAND_CONFIG: IslandConfig = {
       [0.22, 'wander'],
       [0.27, 'bake'],
       [0.55, 'wander'],
-      [0.72, 'gather'],
-      [0.85, 'home'],
+      [0.68, 'gather'],
+      [0.9, 'home'],
     ],
     keeper: [
       [0.22, 'water'],
       [0.36, 'sweep'],
       [0.5, 'wander'],
-      [0.72, 'gather'],
-      [0.85, 'home'],
+      [0.68, 'gather'],
+      [0.9, 'home'],
     ],
     owl: [
       [0.22, 'fish'],
       [0.48, 'read'],
-      [0.62, 'soak'],
+      [0.55, 'soak'],
       [0.72, 'owl'],
     ],
   },
   weather: {
-    minClearSeconds: 60,
-    maxClearSeconds: 90,
-    minRainSeconds: 90,
-    maxRainSeconds: 120,
+    firstClearSeconds: 25,
+    firstRainSeconds: 60,
+    minClearSeconds: 150,
+    maxClearSeconds: 210,
+    minRainSeconds: 60,
+    maxRainSeconds: 90,
     fadeSeconds: 10,
     rainTint: [0.625, 0.715, 0.78],
     dropDensity: 0.55,

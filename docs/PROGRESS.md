@@ -93,6 +93,20 @@
 
 ## Session log
 
+### 2026-11-28 — Everything happens in one visit (user request)
+
+- A visitor who stays about five minutes now sees it all: the first shower comes 25 s after
+  arriving and lasts 60 s (new `weather.firstClearSeconds` / `firstRainSeconds`), so the rain,
+  the puddles, the kid splashing and the birds singing come early and the first evening stays dry;
+  later dry spells are 150–210 s and showers 60–90 s (they fall at night or the next morning).
+- Schedules: the owl's soak starts at 0.55 (she gets about half a minute in the spring), the
+  evening gathering at 0.68 and home at 0.9, the campfire is lit from 0.68 (on the default island
+  all three sit round it for about 30 s).
+- A simulated visit on the default island: rain 25–85 s, the owl soaking from 87 s, the campfire
+  gathering 142–171 s, night with fireflies and shooting stars, the rooster crowing from 274 s, a
+  second shower at dawn, the well gathering on the second evening (about 7 minutes in).
+- **Verified:** typecheck, lint, tests (the first shower's timing, then the usual spells), build.
+
 ### 2026-11-28 — Chicken run: L-shaped, away from the cottage, no sunflowers (user request)
 
 - The run is an L now (or its mirror, whichever fits), not a box. The sunflowers are gone (the

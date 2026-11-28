@@ -1,5 +1,7 @@
 // The weather: long clear spells and, now and then, a gentle rain shower that
-// comes on and dies away slowly. Pure: timers advance by the fixed step and
+// comes on and dies away slowly. The first shower of a visit comes early and
+// is short (so a visitor sees the rain, the puddles and the splashing soon, and
+// the evening after stays dry); the later ones follow the usual spells. Pure: timers advance by the fixed step and
 // the lengths of spells come from the weather's own rng (so the rest of the
 // game's randomness is untouched).
 import type { Rng } from '@/shared/engine/random';
@@ -14,6 +16,8 @@ export interface Weather {
   intensity: number;
   /** Seconds since the last shower stopped (`NO_RAIN_YET` until the first one has). */
   sinceRain: number;
+  /** Showers so far this visit (the first one has its own timing). */
+  showers: number;
 }
 
 /** What `sinceRain` says before any shower: long enough ago that nothing is wet. */
@@ -27,13 +31,14 @@ function spell(raining: boolean, rng: Rng, settings: WeatherSettings): number {
     : rng.range(settings.minClearSeconds, settings.maxClearSeconds);
 }
 
-/** Every visit starts clear. */
-export function createWeather(rng: Rng, settings: WeatherSettings): Weather {
+/** Every visit starts clear, until the first shower (`firstClearSeconds`). */
+export function createWeather(_rng: Rng, settings: WeatherSettings): Weather {
   return {
     raining: false,
-    timeLeft: spell(false, rng, settings),
+    timeLeft: settings.firstClearSeconds,
     intensity: 0,
     sinceRain: NO_RAIN_YET,
+    showers: 0,
   };
 }
 
@@ -46,7 +51,9 @@ export function updateWeather(
   weather.timeLeft -= stepSeconds;
   if (weather.timeLeft <= 0) {
     weather.raining = !weather.raining;
-    weather.timeLeft = spell(weather.raining, rng, settings);
+    const first = weather.raining && weather.showers === 0;
+    weather.timeLeft = first ? settings.firstRainSeconds : spell(weather.raining, rng, settings);
+    if (weather.raining) weather.showers += 1;
   }
   // Counting from when the shower stops (until then, and before any shower, it stays put).
   if (weather.raining) weather.sinceRain = 0;

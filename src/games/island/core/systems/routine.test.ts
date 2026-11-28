@@ -13,7 +13,12 @@ const TILE = ISLAND_CONFIG.map.tileSizePx;
 const STILL: IslandConfig = {
   ...ISLAND_CONFIG,
   dayNight: { ...ISLAND_CONFIG.dayNight, dayLengthSeconds: 1e9 },
-  weather: { ...ISLAND_CONFIG.weather, minClearSeconds: 1e9, maxClearSeconds: 1e9 },
+  weather: {
+    ...ISLAND_CONFIG.weather,
+    firstClearSeconds: 1e9,
+    minClearSeconds: 1e9,
+    maxClearSeconds: 1e9,
+  },
 };
 
 function villageAt(time: number, seed = 46): GameState {
